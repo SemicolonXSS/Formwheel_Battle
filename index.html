@@ -61,11 +61,26 @@ input:focus,select:focus{border-color:var(--accent)}
 </head>
 <body>
 <div id="app"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <script>
 (function(){
 "use strict";
 
 const HOME="https://semicolonxss.github.io/Formwheel/";
+const firebaseConfig={
+  apiKey:"AIzaSyBreTSe1m0-xlbF4aupnU5isRZCihR25IE",
+  authDomain:"formwheel.firebaseapp.com",
+  databaseURL:"https://formwheel-default-rtdb.firebaseio.com/",
+  projectId:"formwheel",
+  storageBucket:"formwheel.firebasestorage.app",
+  messagingSenderId:"431583088241",
+  appId:"1:431583088241:web:74e0e34ea1e3e1170c55d0"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
 const QUESTIONS=[
  {text:"다음 중 대한민국의 수도는 어디일까요?",choices:["부산","서울","인천","대구"],correct:1},
  {text:"물의 화학식은 무엇일까요?",choices:["CO2","O2","H2O","NaCl"],correct:2},
@@ -73,62 +88,112 @@ const QUESTIONS=[
  {text:"1년은 총 며칠일까요? (평년 기준)",choices:["364일","365일","366일","360일"],correct:1}
 ];
 
-let screen="home", pin="", playerName="", role="", mode="1v1", timeLimit=10, qi=0, timer=null, picked=null;
-let players=[{name:"COLON",score:0,me:true},{name:"FRIEND",score:0,me:false}];
+let screen="home", pin="", playerId="", playerName="", role="", mode="1v1", timeLimit=10;
+let qi=0, timer=null, unsub=[], picked=null, localStart=0;
+let hostName="", opponentName="상대를 기다리는 중";
+let hostScore=0, opponentScore=0, battleQuestions=QUESTIONS;
 
 const app=document.getElementById("app");
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function clear(){if(timer){clearInterval(timer);timer=null;}}
+
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function clearTimer(){if(timer){clearInterval(timer);timer=null;}}
+function cleanup(){unsub.forEach(fn=>{try{fn()}catch(e){}});unsub=[];clearTimer();}
 function nav(right=""){return `<div class="navbar"><button class="brand" id="brand"><span class="mark">F</span><span class="wordmark">FormWheel</span><span class="tag">Battle</span></button><span class="nav-meta">${right}</span></div>`;}
 function wire(){const b=document.getElementById("brand");if(b)b.onclick=()=>location.href=HOME;}
-function go(s){clear();screen=s;render();}
+function go(s){cleanup();screen=s;render();}
 function pin4(){return Math.floor(1000+Math.random()*9000).toString();}
-function render(){clear();if(screen==="home")home();else if(screen==="setup")setup();else if(screen==="hostLobby")hostLobby();else if(screen==="join")join();else if(screen==="playerLobby")playerLobby();else if(screen==="question")question();else if(screen==="waiting")waiting();else if(screen==="reveal")reveal();else if(screen==="final")final();wire();}
+function randomId(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
+function battleRef(){return db.ref("battle/"+pin);}
+function playersRef(){return battleRef().child("players");}
+
+function render(){
+  if(screen==="home")home();
+  else if(screen==="setup")setup();
+  else if(screen==="hostLobby")hostLobby();
+  else if(screen==="join")join();
+  else if(screen==="playerLobby")playerLobby();
+  else if(screen==="hostQuestion")hostQuestion();
+  else if(screen==="playerQuestion")playerQuestion();
+  else if(screen==="reveal")reveal();
+  else if(screen==="final")final();
+  wire();
+}
 
 function home(){
 app.innerHTML=nav()+`<main><div class="stage">
 <h1 class="title">Battle 만들기</h1>
-<p class="sub">FormWheel Quiz의 문제를 이용해서 친구와 실시간으로 대결해보세요.</p>
+<p class="sub">Quiz의 문제를 이용해서 친구와 실시간으로 대결해보세요.</p>
 <div class="home-choice">
 <div class="home-card" id="make"><h3>⚔️ Battle 만들기</h3><p>Quiz를 선택하고 친구와 겨룰 Battle을 만들어요.</p></div>
 <div class="home-card" id="join"><h3>🚪 참가하기</h3><p>친구에게 받은 4자리 코드를 입력하고 참가해요.</p></div>
 </div></div></main>`;
-document.getElementById("make").onclick=()=>go("setup");
-document.getElementById("join").onclick=()=>go("join");
+document.getElementById("make").onclick=()=>{role="host";go("setup")};
+document.getElementById("join").onclick=()=>{role="player";go("join")};
 }
 
 function setup(){
 app.innerHTML=nav()+`<main><div class="stage">
 <h1 class="title">Battle 만들기</h1>
-<p class="sub">Quiz와 같은 깔끔한 방식으로 Battle을 설정해요.</p>
+<p class="sub">Battle을 만들고 친구에게 4자리 코드를 보내세요.</p>
 <div class="card">
 <div class="field"><label>내 닉네임</label><input id="hostName" type="text" maxlength="12" placeholder="닉네임을 입력해주세요"></div>
 <div class="field"><label>사용할 Quiz</label><select id="quiz"><option>🧠 기본 Quiz — 4문제</option></select></div>
 <div class="field"><label>Battle 방식</label><div class="mode-row"><button class="mode active">⚔️ 1 vs 1</button><button class="mode" disabled>👥 팀전 (준비 중)</button></div></div>
 <div class="field"><label>문제당 제한 시간</label><div class="mode-row">${[10,15,20,30].map(t=>`<button class="mode ${timeLimit===t?"active":""}" data-time="${t}">${t}초</button>`).join("")}</div></div>
-<div class="note">💡 초안에서는 Quiz에 들어 있는 4개의 문제를 그대로 사용해요. 실제 연동 버전에서는 네 Quiz의 참가 코드/데이터를 선택하도록 연결할 수 있어요.</div>
+<div class="note">현재는 FormWheel Firebase에 Battle 방을 생성합니다. 실제 Quiz 연동은 다음 단계에서 기존 Quiz 데이터 선택 기능으로 연결할 수 있어요.</div>
 <button class="btn" id="create">⚔️ Battle 만들고 코드 받기</button>
+<div class="error" id="err"></div>
 </div></div></main>`;
-document.querySelectorAll("[data-time]").forEach(b=>b.onclick=()=>{timeLimit=+b.dataset.time;render();});
-document.getElementById("create").onclick=()=>{
-const n=document.getElementById("hostName").value.trim();
-if(!n){document.getElementById("hostName").focus();document.getElementById("hostName").style.borderColor="var(--bad)";return;}
-playerName=n;pin=pin4();players=[{name:n,score:0,me:true}];go("hostLobby");
+document.querySelectorAll("[data-time]").forEach(b=>b.onclick=()=>{timeLimit=+b.dataset.time;render()});
+document.getElementById("create").onclick=async()=>{
+  const n=document.getElementById("hostName").value.trim(),err=document.getElementById("err");
+  if(!n){err.textContent="닉네임을 입력해주세요.";return}
+  const p=pin4(), id=randomId();
+  try{
+    const snap=await db.ref("battle/"+p).once("value");
+    if(snap.exists()){document.getElementById("create").click();return}
+    pin=p;playerId=id;playerName=n;hostName=n;
+    await battleRef().set({
+      meta:{hostId:id,hostName:n,mode:"1v1",timeLimit,createdAt:firebase.database.ServerValue.TIMESTAMP,questions:battleQuestions},
+      state:{phase:"lobby",round:-1,startedAt:0},
+      players:{[id]:{name:n,score:0,role:"host",joinedAt:firebase.database.ServerValue.TIMESTAMP}}
+    });
+    go("hostLobby");
+  }catch(e){err.textContent="Firebase 연결에 실패했어요: "+e.message;}
 };
 }
 
 function hostLobby(){
 app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
 <div class="pin-box"><div class="plabel">Battle 참가 코드</div><div class="pin">${pin}</div></div>
-<p class="sub" style="text-align:center">친구에게 이 코드를 알려주세요.</p>
-<div class="player-grid">
-<div class="player-card fire"><div class="player-icon">🔥</div><div class="player-name">${esc(playerName)}</div><div class="score">0</div></div>
-<div class="player-card water"><div class="player-icon">💧</div><div class="player-name">친구를 기다리는 중</div><div class="score">—</div></div>
-</div>
-<div class="actions"><button class="btn" id="start">Battle 시작하기</button><button class="btn ghost" id="cancel">취소하고 처음으로</button></div>
+<p class="sub" style="text-align:center">친구에게 이 코드를 알려주세요. 친구가 참가하면 자동으로 표시됩니다.</p>
+<div id="lobbyPlayers" class="player-grid"></div>
+<div class="actions"><button class="btn" id="start" disabled>상대방을 기다리는 중…</button><button class="btn ghost" id="cancel">취소하고 처음으로</button></div>
+<div class="error" id="err"></div>
 </div></main>`;
-document.getElementById("start").onclick=()=>go("question");
 document.getElementById("cancel").onclick=()=>go("home");
+
+const ref=playersRef();
+const cb=s=>{
+ const ps=Object.entries(s.val()||{}).map(([id,p])=>({id,...p}));
+ const opponent=ps.find(p=>p.role==="player");
+ opponentName=opponent?.name||"상대를 기다리는 중";
+ document.getElementById("lobbyPlayers").innerHTML=`
+ <div class="player-card fire"><div class="player-icon">🔥</div><div class="player-name">${esc(hostName)}</div><div class="score">${hostScore}</div></div>
+ <div class="player-card water"><div class="player-icon">💧</div><div class="player-name">${esc(opponentName)}</div><div class="score">${opponent?opponent.score:"—"}</div></div>`;
+ const btn=document.getElementById("start");
+ if(opponent){btn.disabled=false;btn.textContent="⚔️ Battle 시작하기";}
+};
+ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
+
+const stateRef=battleRef().child("state");
+const stateCb=s=>{const st=s.val();if(st?.phase==="question" && st.round>=0){qi=st.round;go("hostQuestion")}};
+stateRef.on("value",stateCb);unsub.push(()=>stateRef.off("value",stateCb));
+
+document.getElementById("start").onclick=async()=>{
+ try{await stateRef.set({phase:"question",round:0,startedAt:firebase.database.ServerValue.TIMESTAMP})}
+ catch(e){document.getElementById("err").textContent=e.message}
+};
 }
 
 function join(){
@@ -140,74 +205,159 @@ app.innerHTML=nav()+`<main><div class="stage">
 <button class="btn ghost" id="back" style="margin-top:10px">뒤로가기</button>
 </div></main>`;
 document.getElementById("back").onclick=()=>go("home");
-document.getElementById("enter").onclick=()=>{
-const p=document.getElementById("pin").value.trim(),n=document.getElementById("name").value.trim(),e=document.getElementById("err");
-if(!/^\d{4}$/.test(p)){e.textContent="4자리 코드를 입력해주세요.";return}
-if(!n){e.textContent="닉네임을 입력해주세요.";return}
-pin=p;playerName=n;role="player";go("playerLobby");
+document.getElementById("enter").onclick=async()=>{
+ const p=document.getElementById("pin").value.trim(),n=document.getElementById("name").value.trim(),e=document.getElementById("err");
+ if(!/^\d{4}$/.test(p)){e.textContent="4자리 코드를 입력해주세요.";return}
+ if(!n){e.textContent="닉네임을 입력해주세요.";return}
+ try{
+   const snap=await db.ref("battle/"+p).once("value");
+   if(!snap.exists()){e.textContent="존재하지 않는 Battle 코드예요.";return}
+   const data=snap.val(), ps=data.players||{};
+   if(Object.values(ps).some(x=>x.role==="player")){e.textContent="이미 상대가 참가한 Battle이에요.";return}
+   pin=p;playerName=n;playerId=randomId();
+   battleQuestions=data.meta.questions||QUESTIONS;timeLimit=data.meta.timeLimit||10;
+   await db.ref("battle/"+p+"/players/"+playerId).set({name:n,score:0,role:"player",joinedAt:firebase.database.ServerValue.TIMESTAMP});
+   go("playerLobby");
+ }catch(err){e.textContent="Firebase 연결에 실패했어요: "+err.message}
 };
 }
 
 function playerLobby(){
 app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage"><div class="center">
 <div class="big">⚔️</div><h1 class="title">${esc(playerName)}님, 참가 완료!</h1>
-<p class="sub">진행자가 Battle을 시작하면 문제가 나와요.</p></div></div></main>`;
-timer=setTimeout(()=>go("question"),1800);
+<p class="sub">상대방이 Battle을 시작하면 자동으로 문제가 나옵니다.</p></div></div></main>`;
+const ref=battleRef().child("state");
+const cb=s=>{const st=s.val();if(st?.phase==="question"){qi=st.round||0;go("playerQuestion")}};
+ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
 }
 
-function question(){
-picked=null;const q=QUESTIONS[qi];
-app.innerHTML=nav()+`<main><div class="stage wide">
-<div class="topbar"><span class="mini">ROUND ${qi+1} / ${QUESTIONS.length}</span><span class="mini">🔥 ${players[0].score} &nbsp; : &nbsp; ${players[1]?players[1].score:0} 💧</span></div>
-<div class="timer-row"><div class="timer-track"><div class="timer-fill" id="fill" style="width:100%"></div></div><div class="timer-num" id="tnum">${timeLimit}s</div></div>
-<div class="qtext">${esc(q.text)}</div>
-<div class="choices-grid" id="choices">${q.choices.map((c,i)=>`<button class="choice ${"abcd"[i]}" data-i="${i}">${esc(c)}</button>`).join("")}</div>
-</div></main>`;
-document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>answer(+b.dataset.i));
-let started=Date.now();
-timer=setInterval(()=>{
-let elapsed=(Date.now()-started)/1000,remain=Math.max(0,Math.ceil(timeLimit-elapsed)),pct=Math.max(0,100*(1-elapsed/timeLimit));
-document.getElementById("fill").style.width=pct+"%";document.getElementById("tnum").textContent=remain+"s";
-if(remain<=5){document.getElementById("fill").classList.add("urgent");document.getElementById("tnum").classList.add("urgent");}
-if(elapsed>=timeLimit){clear();answer(-1);}
-},200);
+function getQ(){return battleQuestions[qi]||QUESTIONS[qi]||QUESTIONS[0];}
+
+function hostQuestion(){
+ const q=getQ();
+ app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
+ <div class="topbar"><span class="mini">ROUND ${qi+1} / ${battleQuestions.length}</span><span class="mini">🔥 ${hostScore} &nbsp; : &nbsp; ${opponentScore} 💧</span></div>
+ <div class="timer-row"><div class="timer-track"><div class="timer-fill" id="fill" style="width:100%"></div></div><div class="timer-num" id="tnum">${timeLimit}s</div></div>
+ <div class="qtext">${esc(q.text)}</div>
+ <div class="choices-grid">${q.choices.map((c,i)=>`<button class="choice ${"abcd"[i]}" disabled>${esc(c)}</button>`).join("")}</div>
+ <div class="note" id="status">두 플레이어의 답변을 기다리는 중…</div>
+ </div></main>`;
+ runTimer();
+ watchAnswers();
+ const sr=battleRef().child("state"), sc=s=>{const st=s.val();if(st?.phase==="reveal"&&st.round===qi)go("reveal");if(st?.phase==="final")go("final")}; sr.on("value",sc);unsub.push(()=>sr.off("value",sc));
 }
 
-function answer(i){
-if(picked!==null)return;picked=i;clear();
-document.querySelectorAll(".choice").forEach(b=>{b.disabled=true;if(+b.dataset.i!==i)b.classList.add("dim");else b.classList.add("picked");});
-const correct=i===QUESTIONS[qi].correct;
-if(correct)players[0].score++;
-setTimeout(()=>go("reveal"),650);
+function playerQuestion(){
+ picked=null;
+ const q=getQ();
+ app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
+ <div class="topbar"><span class="mini">ROUND ${qi+1} / ${battleQuestions.length}</span><span class="mini">🔥 ${hostScore} &nbsp; : &nbsp; ${opponentScore} 💧</span></div>
+ <div class="timer-row"><div class="timer-track"><div class="timer-fill" id="fill" style="width:100%"></div></div><div class="timer-num" id="tnum">${timeLimit}s</div></div>
+ <div class="qtext">${esc(q.text)}</div>
+ <div class="choices-grid" id="choices">${q.choices.map((c,i)=>`<button class="choice ${"abcd"[i]}" data-i="${i}">${esc(c)}</button>`).join("")}</div>
+ <div class="note" id="status">정답을 하나 선택하세요.</div>
+ </div></main>`;
+ document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>submitAnswer(+b.dataset.i));
+ runTimer();
+ const sr=battleRef().child("state"), sc=s=>{const st=s.val();if(st?.phase==="reveal"&&st.round===qi)go("reveal");if(st?.phase==="final")go("final")}; sr.on("value",sc);unsub.push(()=>sr.off("value",sc));
 }
 
-function waiting(){go("reveal");}
+function runTimer(){
+ clearTimer();localStart=Date.now();
+ timer=setInterval(async()=>{
+   const elapsed=(Date.now()-localStart)/1000,remain=Math.max(0,Math.ceil(timeLimit-elapsed)),pct=Math.max(0,100*(1-elapsed/timeLimit));
+   const f=document.getElementById("fill"),tn=document.getElementById("tnum");
+   if(f)f.style.width=pct+"%";if(tn)tn.textContent=remain+"s";
+   if(remain<=5){f?.classList.add("urgent");tn?.classList.add("urgent")}
+   if(elapsed>=timeLimit){clearTimer();if(role==="player" && picked===null)await submitAnswer(-1);else if(role==="host")await finalizeRoundIfNeeded();}
+ },100);
+}
 
-function reveal(){
-const q=QUESTIONS[qi],correct=picked===q.correct;
-app.innerHTML=nav()+`<main><div class="stage"><div class="result-card">
-<div class="big">${picked<0?"⌛":correct?"🎉":"😵"}</div>
-<h1 class="title">${picked<0?"시간 초과":correct?"정답이에요!":"아쉬워요"}</h1>
-<p class="sub">${picked<0?"이번 문제는 응답하지 못했어요.":correct?"+1점 획득!":"상대에게 점수를 내주지 않았어요."}</p>
-</div><button class="btn" id="next">${qi===QUESTIONS.length-1?"최종 결과 보기":"다음 문제"}</button></div></main>`;
-document.getElementById("next").onclick=()=>{if(qi===QUESTIONS.length-1)go("final");else{qi++;go("question");}};
+async function submitAnswer(i){
+ if(picked!==null)return;picked=i;clearTimer();
+ document.querySelectorAll(".choice").forEach(b=>{b.disabled=true;if(+b.dataset.i!==i)b.classList.add("dim");else b.classList.add("picked")});
+ const q=getQ(),correct=i===q.correct;
+ const points=correct?1:0;
+ try{
+   await battleRef().child("players").child(playerId).child("rounds").child(String(qi)).set({answer:i,correct,points,at:firebase.database.ServerValue.TIMESTAMP});
+   await battleRef().child("players").child(playerId).child("score").transaction(v=>(v||0)+points);
+   document.getElementById("status").textContent=correct?"정답 제출 완료!":"답변 제출 완료!";
+ }catch(e){document.getElementById("status").textContent="답변 저장 실패: "+e.message}
+}
+
+function watchAnswers(){
+ const round=String(qi);
+ const ref=playersRef();
+ const cb=s=>{
+   const ps=s.val()||{}, list=Object.values(ps);
+   const answered=list.filter(p=>p.rounds&&p.rounds[round]);
+   const hostAnswered=answered.some(p=>p.role==="host"),playerAnswered=answered.some(p=>p.role==="player");
+   document.getElementById("status").textContent=`답변 ${answered.length} / 2`;
+   if(hostAnswered&&playerAnswered) finalizeRoundIfNeeded();
+ };
+ ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
+}
+
+async function finalizeRoundIfNeeded(){
+ const snap=await playersRef().once("value"),ps=snap.val()||{},arr=Object.values(ps);
+ if(arr.length<2)return;
+ const answers=arr.map(p=>p.rounds?.[String(qi)]).filter(Boolean);
+ if(answers.length<2)return;
+ const st=await battleRef().child("state").once("value"),current=st.val()||{};
+ if(current.phase!=="question"||current.round!==qi)return;
+ await battleRef().child("state").set({phase:"reveal",round:qi,revealedAt:firebase.database.ServerValue.TIMESTAMP});
+}
+
+async function reveal(){
+ const snap=await playersRef().once("value"),ps=snap.val()||{},arr=Object.values(ps);
+ const host=arr.find(p=>p.role==="host")||{name:hostName,score:0},player=arr.find(p=>p.role==="player")||{name:opponentName,score:0};
+ hostName=host.name;opponentName=player.name;hostScore=host.score||0;opponentScore=player.score||0;
+ const me=role==="host"?host:player, other=role==="host"?player:host;
+ app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage">
+ <div class="result-card"><div class="big">⚔️</div><h1 class="title">ROUND ${qi+1} 결과</h1>
+ <div class="result-score">${me.score||0} : ${other.score||0}</div><div class="winner">${esc(me.name)} ${((me.score||0)>(other.score||0))?"앞서는 중":((me.score||0)===(other.score||0)?"동점":"추격 중")}!</div></div>
+ <div class="lead"><span class="name">🔥 ${esc(host.name)}</span><span class="pts">${host.score||0}점</span></div>
+ <div class="lead"><span class="name">💧 ${esc(player.name)}</span><span class="pts">${player.score||0}점</span></div>
+ <div class="actions">${role==="host"?`<button class="btn" id="next">${qi===battleQuestions.length-1?"최종 결과 보기":"다음 문제"}</button>`:`<div class="note" style="text-align:center">진행자가 다음 문제를 시작할 때까지 잠시만 기다려주세요.</div>`}</div>
+ </div></main>`;
+ if(role==="host")document.getElementById("next").onclick=async()=>{
+   if(qi===battleQuestions.length-1)await battleRef().child("state").set({phase:"final",round:qi});
+   else await battleRef().child("state").set({phase:"question",round:qi+1,startedAt:firebase.database.ServerValue.TIMESTAMP});
+ };
+ const ref=battleRef().child("state"),cb=s=>{const st=s.val();if(st?.phase==="reveal"&&st.round===qi)return;if(st?.phase==="question"&&st.round!==qi){qi=st.round;go(role==="host"?"hostQuestion":"playerQuestion")}if(st?.phase==="final")go("final")};
+ ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
+}
+
+function stateWatcher(){
+ const ref=battleRef().child("state");
+ const cb=s=>{const st=s.val();if(!st)return;if(st.phase==="reveal")go("reveal");else if(st.phase==="final")go("final");};
+ ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
 }
 
 function final(){
-const me=players[0].score,opp=players[1]?players[1].score:Math.max(0,QUESTIONS.length-me-1);
-const win=me>opp,tie=me===opp;
-app.innerHTML=nav()+`<main><div class="stage">
-<div class="result-card"><div class="big">${tie?"🤝":win?"🏆":"💥"}</div>
-<h1 class="title">${tie?"무승부!":win?"VICTORY!":"DEFEAT"}</h1>
-<div class="result-score">${me} : ${opp}</div><div class="winner">${tie?"멋진 대결이었어요!":win?"🔥 "+esc(playerName)+" 승리!":"💧 FRIEND 승리!"}</div></div>
-<div class="lead"><span class="name">🔥 ${esc(playerName)}</span><span class="pts">${me}점</span></div>
-<div class="lead"><span class="name">💧 FRIEND</span><span class="pts">${opp}점</span></div>
-<div class="actions"><button class="btn" id="again">🔄 다시 Battle</button><button class="btn ghost" id="quiz">📝 Quiz로 돌아가기</button></div>
-</div></main>`;
-document.getElementById("again").onclick=()=>{qi=0;players=[{name:playerName,score:0,me:true}];go("setup");};
-document.getElementById("quiz").onclick=()=>location.href=HOME;
+ app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage">
+ <div class="result-card"><div class="big">🏆</div><h1 class="title">Battle 종료!</h1>
+ <div class="result-score" id="finalScore">결과 계산 중…</div><div class="winner" id="finalWinner"></div></div>
+ <div id="finalList"></div>
+ <div class="actions"><button class="btn" id="again">🔄 새 Battle 만들기</button><button class="btn ghost" id="quiz">📝 Quiz로 돌아가기</button></div>
+ </div></main>`;
+ playersRef().once("value").then(s=>{
+   const arr=Object.values(s.val()||{}).sort((a,b)=>(b.score||0)-(a.score||0));
+   const me=arr.find(p=>p.id===playerId)||arr.find(p=>p.role===role)||arr[0]||{name:playerName,score:0};
+   const other=arr.find(p=>p!==me)||{name:"상대",score:0};
+   document.getElementById("finalScore").textContent=`${me.score||0} : ${other.score||0}`;
+   document.getElementById("finalWinner").textContent=(me.score||0)>(other.score||0)?`🏆 ${me.name} 승리!`:(me.score||0)===(other.score||0)?"🤝 무승부!":`💥 ${other.name} 승리!`;
+   document.getElementById("finalList").innerHTML=arr.map((p,i)=>`<div class="lead ${p.id===playerId?"me":""}"><span class="name">${i===0?"🏆 ":""}${esc(p.name)}</span><span class="pts">${p.score||0}점</span></div>`).join("");
+ });
+ document.getElementById("again").onclick=()=>{pin="";qi=0;go("setup")};
+ document.getElementById("quiz").onclick=()=>location.href=HOME;
 }
 
+function startBattleListeners(){
+ // Keep the state synchronized while in reveal/final transitions.
+ if(screen==="reveal"||screen==="final")return;
+ stateWatcher();
+}
 render();
 })();
 </script>
