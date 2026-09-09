@@ -310,8 +310,17 @@ async function submitAnswer(i){
  const q=getQ(),correct=i===q.correct;
  const points=correct?1:0;
  try{
-   await battleRef().child("players").child(playerId).child("rounds").child(String(qi)).set({answer:i,correct,points,at:firebase.database.ServerValue.TIMESTAMP});
-   await battleRef().child("players").child(playerId).child("score").transaction(v=>(v||0)+points);
+   const pRef=battleRef().child("players").child(playerId);
+   // rounds 기록과 score 갱신을 하나의 update()로 묶어 원자적으로 반영합니다.
+   // (이전에는 두 번의 별도 write로 나뉘어 있어서, 상대 기기가 "답변 완료" 신호를
+   // rounds 필드만 보고 감지할 때 score가 아직 반영되지 않은 순간을 읽어버리는
+   // 경쟁 조건이 있었습니다. 이게 기기마다 점수가 다르게 보이던 원인입니다.)
+   const curSnap=await pRef.child("score").once("value");
+   const newScore=(curSnap.val()||0)+points;
+   await pRef.update({
+     score:newScore,
+     ["rounds/"+qi]:{answer:i,correct,points,at:firebase.database.ServerValue.TIMESTAMP}
+   });
    const st=document.getElementById("status");
    if(st)st.textContent=correct?"정답 제출 완료!":"답변 제출 완료!";
  }catch(e){const st=document.getElementById("status");if(st)st.textContent="답변 저장 실패: "+e.message}
