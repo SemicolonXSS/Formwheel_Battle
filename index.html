@@ -56,7 +56,23 @@ input:focus,select:focus{border-color:var(--accent)}
 .error{color:var(--bad);font-size:13px;margin-top:10px}.actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
 .mode-row{display:flex;gap:8px;flex-wrap:wrap}.mode{flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);font-weight:700;cursor:pointer;color:var(--muted)}.mode.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
 .note{padding:12px 14px;background:var(--surface-2);border-radius:10px;color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:16px}
-@media(max-width:520px){.choices-grid,.player-grid{gap:9px}.choice{min-height:82px;padding:16px 10px}.pin{font-size:40px}}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+.team-col{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center}
+.team-col.fire{border-color:#FDBA74;background:#FFF7ED}.team-col.water{border-color:#A5F3FC;background:#ECFEFF}
+.team-col .team-icon{font-size:26px}.team-col .team-title{font-weight:800;margin-top:4px}
+.team-col .team-score{font-size:30px;font-weight:800;margin:8px 0 10px}
+.team-members{display:flex;flex-direction:column;gap:6px}
+.team-member{background:rgba(255,255,255,.6);border-radius:8px;padding:7px 9px;font-size:13.5px;font-weight:600;display:flex;justify-content:space-between}
+.team-member.host-tag::after{content:" 👑";}
+.team-member.me{outline:2px solid var(--accent);outline-offset:-2px}
+.team-empty{font-size:12.5px;color:var(--muted);padding:8px 0}
+.team-pick{display:flex;gap:10px;margin-bottom:16px}
+.team-pick button{flex:1;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);padding:16px 10px;font-weight:800;cursor:pointer;color:var(--text)}
+.team-pick button.fire{border-color:#FDBA74}.team-pick button.water{border-color:#A5F3FC}
+.team-pick button:disabled{opacity:.35;cursor:not-allowed}
+.team-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px}
+.team-badge.A{color:var(--fire);background:#FFF7ED}.team-badge.B{color:#0E7490;background:#ECFEFF}
+@media(max-width:520px){.choices-grid,.player-grid,.team-grid{gap:9px}.choice{min-height:82px;padding:16px 10px}.pin{font-size:40px}}
 </style>
 </head>
 <body>
@@ -93,6 +109,18 @@ let qi=0, timer=null, unsub=[], picked=null, localStart=0;
 let hostName="", opponentName="상대를 기다리는 중";
 let hostScore=0, opponentScore=0, battleQuestions=QUESTIONS;
 let libraryQuizzes=[], selectedQuizId="";
+let teamSize=2, myTeam="A", teamAScore=0, teamBScore=0;
+
+function isTeamMode(){return mode==="team";}
+function teamCounts(arr){return {A:arr.filter(p=>p.team==="A").length,B:arr.filter(p=>p.team==="B").length};}
+function assignTeam(ps,size){
+  const arr=Object.values(ps||{});
+  const c=teamCounts(arr);
+  const aOpen=c.A<size, bOpen=c.B<size;
+  if(!aOpen&&!bOpen)return null;
+  if(aOpen&&(!bOpen||c.A<=c.B))return "A";
+  return "B";
+}
 
 const app=document.getElementById("app");
 
@@ -133,13 +161,15 @@ document.getElementById("join").onclick=()=>{role="player";go("join")};
 }
 
 async function setup(){
+mode="1v1";
 app.innerHTML=nav()+`<main><div class="stage">
 <h1 class="title">Battle 만들기</h1>
 <p class="sub">Quiz를 선택하고 친구에게 4자리 코드를 보내세요.</p>
 <div class="card">
 <div class="field"><label>내 닉네임</label><input id="hostName" type="text" maxlength="12" placeholder="닉네임을 입력해주세요"></div>
 <div class="field"><label>사용할 Quiz</label><select id="quiz"><option>불러오는 중…</option></select></div>
-<div class="field"><label>Battle 방식</label><div class="mode-row"><button class="mode active">⚔️ 1 vs 1</button><button class="mode" disabled>👥 팀전 (준비 중)</button></div></div>
+<div class="field"><label>Battle 방식</label><div class="mode-row" id="modeRow"><button class="mode active" data-mode="1v1">⚔️ 1 vs 1</button><button class="mode" data-mode="team">👥 팀전</button></div></div>
+<div class="field" id="teamSizeField" style="display:none"><label>팀당 인원</label><div class="mode-row" id="teamSizeRow">${[2,3,4].map(t=>`<button class="mode ${teamSize===t?"active":""}" data-team-size="${t}">${t} vs ${t}</button>`).join("")}</div></div>
 <div class="field"><label>문제당 제한 시간</label><div class="mode-row" id="timeRow">${[10,15,20,30].map(t=>`<button class="mode ${timeLimit===t?"active":""}" data-time="${t}">${t}초</button>`).join("")}</div></div>
 <div class="note" id="quizNote">FormWheel Quiz에서 만든 문제를 그대로 가져와서 Battle에 쓸 수 있어요.</div>
 <button class="btn" id="create">⚔️ Battle 만들고 코드 받기</button>
@@ -147,6 +177,14 @@ app.innerHTML=nav()+`<main><div class="stage">
 </div></div></main>`;
 wire();
 document.querySelectorAll("[data-time]").forEach(b=>b.onclick=()=>{timeLimit=+b.dataset.time;updateTimeButtons()});
+document.querySelectorAll("[data-team-size]").forEach(b=>b.onclick=()=>{teamSize=+b.dataset.teamSize;updateTeamSizeButtons()});
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
+  mode=b.dataset.mode;
+  document.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("active",x.dataset.mode===mode));
+  document.getElementById("teamSizeField").style.display=mode==="team"?"":"none";
+  const startBtnLabel=document.getElementById("create");
+  if(startBtnLabel)startBtnLabel.textContent=mode==="team"?"👥 팀전 Battle 만들고 코드 받기":"⚔️ Battle 만들고 코드 받기";
+});
 
 try{
   const snap=await db.ref("quizzes").once("value");
@@ -187,11 +225,13 @@ document.getElementById("create").onclick=async()=>{
   try{
     const snap=await db.ref("battle/"+p).once("value");
     if(snap.exists()){document.getElementById("create").click();return}
-    pin=p;playerId=id;playerName=n;hostName=n;
+    pin=p;playerId=id;playerName=n;hostName=n;myTeam="A";
+    const hostPlayer={name:n,score:0,role:"host",joinedAt:firebase.database.ServerValue.TIMESTAMP};
+    if(isTeamMode())hostPlayer.team="A";
     await battleRef().set({
-      meta:{hostId:id,hostName:n,mode:"1v1",timeLimit,createdAt:firebase.database.ServerValue.TIMESTAMP,questions:battleQuestions},
+      meta:{hostId:id,hostName:n,mode,teamSize:isTeamMode()?teamSize:null,timeLimit,createdAt:firebase.database.ServerValue.TIMESTAMP,questions:battleQuestions},
       state:{phase:"lobby",round:-1,startedAt:0},
-      players:{[id]:{name:n,score:0,role:"host",joinedAt:firebase.database.ServerValue.TIMESTAMP}}
+      players:{[id]:hostPlayer}
     });
     go("hostLobby");
   }catch(e){err.textContent="Firebase 연결에 실패했어요: "+e.message;}
@@ -203,8 +243,14 @@ function updateTimeButtons(){
     b.classList.toggle("active", +b.dataset.time===timeLimit);
   });
 }
+function updateTeamSizeButtons(){
+  document.querySelectorAll("[data-team-size]").forEach(b=>{
+    b.classList.toggle("active", +b.dataset.teamSize===teamSize);
+  });
+}
 
 function hostLobby(){
+if(isTeamMode()){hostLobbyTeam();return;}
 app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
 <div class="pin-box"><div class="plabel">Battle 참가 코드</div><div class="pin">${pin}</div></div>
 <p class="sub" style="text-align:center">친구에게 이 코드를 알려주세요. 친구가 참가하면 자동으로 표시됩니다.</p>
@@ -237,6 +283,48 @@ document.getElementById("start").onclick=async()=>{
 };
 }
 
+function renderTeamGrid(arr){
+ const a=arr.filter(p=>p.team==="A"), b=arr.filter(p=>p.team==="B");
+ const memberRow=p=>`<div class="team-member ${p.role==="host"?"host-tag":""} ${p.id===playerId?"me":""}"><span>${esc(p.name)}</span><span>${p.score||0}점</span></div>`;
+ return `<div class="team-grid">
+ <div class="team-col fire"><div class="team-icon">🔥</div><div class="team-title">팀 A · ${a.length}${teamSize?`/${teamSize}`:""}명</div><div class="team-score">${a.reduce((s,p)=>s+(p.score||0),0)}</div>
+ <div class="team-members">${a.length?a.map(memberRow).join(""):`<div class="team-empty">아직 팀원이 없어요</div>`}</div></div>
+ <div class="team-col water"><div class="team-icon">💧</div><div class="team-title">팀 B · ${b.length}${teamSize?`/${teamSize}`:""}명</div><div class="team-score">${b.reduce((s,p)=>s+(p.score||0),0)}</div>
+ <div class="team-members">${b.length?b.map(memberRow).join(""):`<div class="team-empty">아직 팀원이 없어요</div>`}</div></div>
+ </div>`;
+}
+
+function hostLobbyTeam(){
+app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
+<div class="pin-box"><div class="plabel">Battle 참가 코드</div><div class="pin">${pin}</div></div>
+<p class="sub" style="text-align:center">친구들에게 이 코드를 알려주세요. 참가하는 대로 팀에 자동 배정됩니다. (팀당 최대 ${teamSize}명)</p>
+<div id="lobbyTeams"></div>
+<div class="actions"><button class="btn" id="start" disabled>팀원을 기다리는 중…</button><button class="btn ghost" id="cancel">취소하고 처음으로</button></div>
+<div class="error" id="err"></div>
+</div></main>`;
+document.getElementById("cancel").onclick=()=>go("home");
+
+const ref=playersRef();
+const cb=s=>{
+ const arr=Object.entries(s.val()||{}).map(([id,p])=>({id,...p}));
+ document.getElementById("lobbyTeams").innerHTML=renderTeamGrid(arr);
+ const c=teamCounts(arr);
+ const btn=document.getElementById("start");
+ if(c.A>=1&&c.B>=1){btn.disabled=false;btn.textContent="⚔️ Battle 시작하기";}
+ else{btn.disabled=true;btn.textContent="팀원을 기다리는 중…";}
+};
+ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
+
+const stateRef=battleRef().child("state");
+const stateCb=s=>{const st=s.val();if(st&&st.phase==="question"&&st.round>=0){qi=st.round;go("hostQuestion")}};
+stateRef.on("value",stateCb);unsub.push(()=>stateRef.off("value",stateCb));
+
+document.getElementById("start").onclick=async()=>{
+ try{await stateRef.set({phase:"question",round:0,startedAt:firebase.database.ServerValue.TIMESTAMP})}
+ catch(e){document.getElementById("err").textContent=e.message}
+};
+}
+
 function join(){
 app.innerHTML=nav()+`<main><div class="stage">
 <h1 class="title">Battle 참가하기</h1><p class="sub">친구에게 받은 코드와 닉네임을 입력하세요.</p>
@@ -254,16 +342,28 @@ document.getElementById("enter").onclick=async()=>{
    const snap=await db.ref("battle/"+p).once("value");
    if(!snap.exists()){e.textContent="존재하지 않는 Battle 코드예요.";return}
    const data=snap.val(), ps=data.players||{};
-   if(Object.values(ps).some(x=>x.role==="player")){e.textContent="이미 상대가 참가한 Battle이에요.";return}
+   const battleMode=data.meta.mode==="team"?"team":"1v1";
+   if(data.state&&data.state.phase&&data.state.phase!=="lobby"){e.textContent="이미 시작된 Battle이에요.";return}
+   const newPlayer={name:n,score:0,role:"player",joinedAt:firebase.database.ServerValue.TIMESTAMP};
+   if(battleMode==="team"){
+     const size=data.meta.teamSize||2;
+     const t=assignTeam(ps,size);
+     if(!t){e.textContent="이미 인원이 가득 찬 Battle이에요.";return}
+     newPlayer.team=t;mode="team";teamSize=size;myTeam=t;
+   }else{
+     if(Object.values(ps).some(x=>x.role==="player")){e.textContent="이미 상대가 참가한 Battle이에요.";return}
+     mode="1v1";
+   }
    pin=p;playerName=n;playerId=randomId();
    battleQuestions=data.meta.questions||QUESTIONS;timeLimit=data.meta.timeLimit||10;
-   await db.ref("battle/"+p+"/players/"+playerId).set({name:n,score:0,role:"player",joinedAt:firebase.database.ServerValue.TIMESTAMP});
+   await db.ref("battle/"+p+"/players/"+playerId).set(newPlayer);
    go("playerLobby");
  }catch(err){e.textContent="Firebase 연결에 실패했어요: "+err.message}
 };
 }
 
 function playerLobby(){
+if(isTeamMode()){playerLobbyTeam();return;}
 app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage"><div class="center">
 <div class="big">⚔️</div><h1 class="title">${esc(playerName)}님, 참가 완료!</h1>
 <p class="sub">상대방이 Battle을 시작하면 자동으로 문제가 나옵니다.</p></div></div></main>`;
@@ -272,13 +372,31 @@ const cb=s=>{const st=s.val();if(st&&st.phase==="question"){qi=st.round||0;go("p
 ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
 }
 
+function playerLobbyTeam(){
+app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
+<div class="center"><div class="big">${myTeam==="A"?"🔥":"💧"}</div><h1 class="title">${esc(playerName)}님, 팀 ${myTeam} 참가 완료!</h1>
+<p class="sub">진행자가 Battle을 시작하면 자동으로 문제가 나옵니다.</p></div>
+<div id="lobbyTeams"></div>
+</div></main>`;
+const ref=playersRef();
+const pcb=s=>{
+ const arr=Object.entries(s.val()||{}).map(([id,p])=>({id,...p}));
+ document.getElementById("lobbyTeams").innerHTML=renderTeamGrid(arr);
+};
+ref.on("value",pcb);unsub.push(()=>ref.off("value",pcb));
+const sref=battleRef().child("state");
+const cb=s=>{const st=s.val();if(st&&st.phase==="question"){qi=st.round||0;go("playerQuestion")}};
+sref.on("value",cb);unsub.push(()=>sref.off("value",cb));
+}
+
 function getQ(){return battleQuestions[qi]||QUESTIONS[qi]||QUESTIONS[0];}
 
 function questionScreen(){
  picked=null;
  const q=getQ();
+ const scoreLabel=isTeamMode()?`🔥 팀A ${teamAScore} &nbsp; : &nbsp; ${teamBScore} 팀B 💧`:`🔥 ${hostScore} &nbsp; : &nbsp; ${opponentScore} 💧`;
  app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
- <div class="topbar"><span class="mini">ROUND ${qi+1} / ${battleQuestions.length}</span><span class="mini">🔥 ${hostScore} &nbsp; : &nbsp; ${opponentScore} 💧</span></div>
+ <div class="topbar"><span class="mini">ROUND ${qi+1} / ${battleQuestions.length}</span><span class="mini">${scoreLabel}</span></div>
  <div class="timer-row"><div class="timer-track"><div class="timer-fill" id="fill" style="width:100%"></div></div><div class="timer-num" id="tnum">${timeLimit}s</div></div>
  <div class="qtext">${esc(q.text)}</div>
  <div class="choices-grid" id="choices">${q.choices.map((c,i)=>`<button class="choice ${"abcd"[i]}" data-i="${i}">${esc(c)}</button>`).join("")}</div>
@@ -333,8 +451,8 @@ function watchAnswers(){
    const ps=s.val()||{}, list=Object.values(ps);
    const answered=list.filter(p=>p.rounds&&p.rounds[round]);
    const st=document.getElementById("status");
-   if(st)st.textContent=`답변 ${answered.length} / 2`;
-   if(answered.length>=2) finalizeRoundIfNeeded();
+   if(st)st.textContent=`답변 ${answered.length} / ${list.length}`;
+   if(list.length>=2&&answered.length>=list.length) finalizeRoundIfNeeded();
  };
  ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
 }
@@ -343,13 +461,14 @@ async function finalizeRoundIfNeeded(){
  const snap=await playersRef().once("value"),ps=snap.val()||{},arr=Object.values(ps);
  if(arr.length<2)return;
  const answers=arr.map(p=>p.rounds?p.rounds[String(qi)]:null).filter(Boolean);
- if(answers.length<2)return;
+ if(answers.length<arr.length)return;
  const st=await battleRef().child("state").once("value"),current=st.val()||{};
  if(current.phase!=="question"||current.round!==qi)return;
  await battleRef().child("state").set({phase:"reveal",round:qi,revealedAt:firebase.database.ServerValue.TIMESTAMP});
 }
 
 async function reveal(){
+ if(isTeamMode()){revealTeam();return;}
  const snap=await playersRef().once("value"),ps=snap.val()||{},arr=Object.values(ps);
  const host=arr.find(p=>p.role==="host")||{name:hostName,score:0},player=arr.find(p=>p.role==="player")||{name:opponentName,score:0};
  hostName=host.name;opponentName=player.name;hostScore=host.score||0;opponentScore=player.score||0;
@@ -374,7 +493,33 @@ async function reveal(){
  ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
 }
 
+async function revealTeam(){
+ const snap=await playersRef().once("value"),ps=snap.val()||{},arr=Object.values(ps);
+ teamAScore=arr.filter(p=>p.team==="A").reduce((s,p)=>s+(p.score||0),0);
+ teamBScore=arr.filter(p=>p.team==="B").reduce((s,p)=>s+(p.score||0),0);
+ const myScore=myTeam==="A"?teamAScore:teamBScore, otherScore=myTeam==="A"?teamBScore:teamAScore;
+ const verdict=myScore>otherScore?"우리 팀이 앞서는 중":myScore===otherScore?"동점":"추격 중";
+ app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
+ <div class="result-card"><div class="big">⚔️</div><h1 class="title">ROUND ${qi+1} 결과</h1>
+ <div class="result-score">${teamAScore} : ${teamBScore}</div><div class="winner">${esc(playerName)}님, ${verdict}!</div></div>
+ ${renderTeamGrid(arr)}
+ <div class="actions">${role==="host"?`<button class="btn" id="next">${qi===battleQuestions.length-1?"최종 결과 보기":"다음 문제"}</button>`:`<div class="note" style="text-align:center">진행자가 다음 문제를 시작할 때까지 잠시만 기다려주세요.</div>`}</div>
+ </div></main>`;
+ wire();
+ if(role==="host")document.getElementById("next").onclick=async()=>{
+   if(qi===battleQuestions.length-1)await battleRef().child("state").set({phase:"final",round:qi});
+   else await battleRef().child("state").set({phase:"question",round:qi+1,startedAt:firebase.database.ServerValue.TIMESTAMP});
+ };
+ const ref=battleRef().child("state"),cb=s=>{
+   const st=s.val();if(!st)return;
+   if(st.phase==="question"&&st.round!==qi){qi=st.round;go(role==="host"?"hostQuestion":"playerQuestion");return}
+   if(st.phase==="final")go("final");
+ };
+ ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
+}
+
 function final(){
+ if(isTeamMode()){finalTeam();return;}
  app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage">
  <div class="result-card"><div class="big">🏆</div><h1 class="title">Battle 종료!</h1>
  <div class="result-score" id="finalScore">결과 계산 중…</div><div class="winner" id="finalWinner"></div></div>
@@ -389,7 +534,28 @@ function final(){
    document.getElementById("finalWinner").textContent=(me.score||0)>(other.score||0)?`🏆 ${me.name} 승리!`:(me.score||0)===(other.score||0)?"🤝 무승부!":`💥 ${other.name} 승리!`;
    document.getElementById("finalList").innerHTML=arr.map((p,i)=>`<div class="lead ${p.id===playerId?"me":""}"><span class="name">${i===0?"🏆 ":""}${esc(p.name)}</span><span class="pts">${p.score||0}점</span></div>`).join("");
  });
- document.getElementById("again").onclick=()=>{pin="";qi=0;go("setup")};
+ document.getElementById("again").onclick=()=>{pin="";qi=0;role="host";go("setup")};
+ document.getElementById("quiz").onclick=()=>window.open(HOME,"_blank");
+}
+
+function finalTeam(){
+ app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
+ <div class="result-card"><div class="big">🏆</div><h1 class="title">Battle 종료!</h1>
+ <div class="result-score" id="finalScore">결과 계산 중…</div><div class="winner" id="finalWinner"></div></div>
+ <div id="finalTeams"></div>
+ <div class="actions"><button class="btn" id="again">🔄 새 Battle 만들기</button><button class="btn ghost" id="quiz">📝 FormWheel로 돌아가기</button></div>
+ </div></main>`;
+ playersRef().once("value").then(s=>{
+   const arr=Object.entries(s.val()||{}).map(([id,p])=>({id,...p}));
+   const a=arr.filter(p=>p.team==="A").reduce((s,p)=>s+(p.score||0),0);
+   const b=arr.filter(p=>p.team==="B").reduce((s,p)=>s+(p.score||0),0);
+   teamAScore=a;teamBScore=b;
+   document.getElementById("finalScore").textContent=`${a} : ${b}`;
+   const myScore=myTeam==="A"?a:b, otherScore=myTeam==="A"?b:a;
+   document.getElementById("finalWinner").textContent=myScore>otherScore?"🏆 우리 팀 승리!":myScore===otherScore?"🤝 무승부!":"💥 상대 팀 승리!";
+   document.getElementById("finalTeams").innerHTML=renderTeamGrid(arr);
+ });
+ document.getElementById("again").onclick=()=>{pin="";qi=0;role="host";mode="1v1";go("setup")};
  document.getElementById("quiz").onclick=()=>window.open(HOME,"_blank");
 }
 
