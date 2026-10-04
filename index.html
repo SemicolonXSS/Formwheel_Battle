@@ -1,78 +1,563 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>FormWheel — Battle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#F7F7FB;--surface:#FFFFFF;--surface-2:#F1F1F8;--border:#E6E6F0;
-  --text:#18181B;--muted:#71717A;--accent:#4F46E5;--accent-soft:#EEF0FF;
-  --c-a:#FF6B6B;--c-b:#22B8CF;--c-c:#FFB020;--c-d:#7C5CFC;
-  --good:#16A34A;--bad:#E11D48;--fire:#F97316;
+  --bg:#f7f8fc;
+  --surface:#fff;
+  --surface2:#f1f2f7;
+  --border:#e5e7ef;
+  --text:#18181b;
+  --muted:#71717a;
+  --accent:#4f46e5;
+  --accentSoft:#eef0ff;
+  --good:#16a34a;
+  --bad:#e11d48;
+  --red:#ff6b6b;
+  --cyan:#22b8cf;
+  --yellow:#ffb020;
+  --purple:#7c5cfc;
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100%}
+html,body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
 button,input,select{font:inherit}
-#app{min-height:100vh;display:flex;flex-direction:column}
-.navbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
-.brand{display:flex;align-items:center;gap:9px;cursor:pointer;border:none;background:none;padding:0}
-.mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
-.wordmark{font-weight:700;font-size:16px}.tag{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:3px 8px;border-radius:999px}
-.nav-meta{font-size:13px;color:var(--muted)}.nav-meta b{color:var(--text);letter-spacing:1px}
-main{flex:1;display:flex;justify-content:center;padding:28px 18px 48px}
-.stage{width:100%;max-width:460px;display:flex;flex-direction:column}.wide{max-width:720px}
-.title{font-weight:800;font-size:24px;line-height:1.3;margin:0 0 6px}.sub{color:var(--muted);font-size:14.5px;line-height:1.6;margin:0 0 24px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
-.home-choice{display:flex;flex-direction:column;gap:12px;margin-top:6px}
-.home-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:20px;text-align:left;cursor:pointer;color:var(--text)}
-.home-card:hover{border-color:var(--accent);background:var(--accent-soft)}
-.home-card h3{margin:0 0 4px;font-size:17px}.home-card p{margin:0;color:var(--muted);font-size:13.5px}
-.field{margin-bottom:16px}label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
-input[type=text],input[type=tel],select{width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:10px;padding:12px 13px;font-size:15.5px;outline:none}
-input:focus,select:focus{border-color:var(--accent)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:10px;padding:14px 20px;font-size:15.5px;font-weight:700;cursor:pointer;width:100%;color:#fff;background:var(--accent);transition:transform .08s,opacity .15s}
-.btn:active{transform:scale(.98)}.btn.ghost{background:var(--surface);color:var(--text);border:1.5px solid var(--border)}.btn:disabled{opacity:.4;cursor:not-allowed}
-.pin-box{background:var(--accent-soft);border:1.5px dashed var(--accent);border-radius:14px;padding:24px 20px;text-align:center;margin-bottom:20px}
-.plabel{color:var(--accent);font-size:12.5px;font-weight:700;margin-bottom:6px}.pin{font-size:46px;font-weight:800;letter-spacing:6px}
-.player-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
-.player-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:18px;text-align:center}
-.player-card.fire{border-color:#FDBA74;background:#FFF7ED}.player-card.water{border-color:#A5F3FC;background:#ECFEFF}
-.player-icon{font-size:28px}.player-name{font-weight:800;margin-top:5px}.score{font-size:28px;font-weight:800;margin-top:8px}
-.vs{text-align:center;font-weight:800;color:var(--muted);margin:-2px 0}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.mini{color:var(--muted);font-size:13.5px;font-weight:600}
-.timer-row{display:flex;align-items:center;gap:10px;margin-bottom:18px}.timer-track{flex:1;height:7px;background:var(--surface-2);border-radius:999px;overflow:hidden}.timer-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .2s linear}.urgent{background:var(--bad)!important}.timer-num{font-weight:800;font-size:15px;color:var(--accent);min-width:34px;text-align:right}
-.qtext{font-weight:800;font-size:20px;line-height:1.4;margin:0 0 18px}.choices-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.choice{border:none;border-radius:12px;color:#fff;font-weight:700;font-size:15.5px;padding:20px 12px;min-height:92px;cursor:pointer;text-align:left}
-.choice.a{background:var(--c-a)}.choice.b{background:var(--c-b)}.choice.c{background:var(--c-c)}.choice.d{background:var(--c-d)}
-.choice:disabled{opacity:.35}.choice.picked{outline:3px solid var(--text);outline-offset:-3px}.choice.dim{opacity:.25}
-.center{text-align:center;padding:42px 0}.big{font-size:48px;margin-bottom:8px}
-.result-card{text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px 20px;margin-bottom:14px}
-.result-score{font-size:38px;font-weight:800;margin:8px 0 18px}.winner{font-size:16px;font-weight:700;color:var(--accent)}
-.lead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface-2);border-radius:10px;margin-bottom:8px}.lead.me{border:1.5px solid var(--accent)}.lead .name{font-weight:600}.lead .pts{font-weight:800;color:var(--accent)}
-.error{color:var(--bad);font-size:13px;margin-top:10px}.actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
-.mode-row{display:flex;gap:8px;flex-wrap:wrap}.mode{flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);font-weight:700;cursor:pointer;color:var(--muted)}.mode.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-.note{padding:12px 14px;background:var(--surface-2);border-radius:10px;color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:16px}
-.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
-.team-col{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center}
-.team-col.fire{border-color:#FDBA74;background:#FFF7ED}.team-col.water{border-color:#A5F3FC;background:#ECFEFF}
-.team-col .team-icon{font-size:26px}.team-col .team-title{font-weight:800;margin-top:4px}
-.team-col .team-score{font-size:30px;font-weight:800;margin:8px 0 10px}
-.team-members{display:flex;flex-direction:column;gap:6px}
-.team-member{background:rgba(255,255,255,.6);border-radius:8px;padding:7px 9px;font-size:13.5px;font-weight:600;display:flex;justify-content:space-between}
-.team-member.host-tag::after{content:" 👑";}
-.team-member.me{outline:2px solid var(--accent);outline-offset:-2px}
-.team-empty{font-size:12.5px;color:var(--muted);padding:8px 0}
-.team-pick{display:flex;gap:10px;margin-bottom:16px}
-.team-pick button{flex:1;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);padding:16px 10px;font-weight:800;cursor:pointer;color:var(--text)}
-.team-pick button.fire{border-color:#FDBA74}.team-pick button.water{border-color:#A5F3FC}
-.team-pick button:disabled{opacity:.35;cursor:not-allowed}
-.team-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px}
-.team-badge.A{color:var(--fire);background:#FFF7ED}.team-badge.B{color:#0E7490;background:#ECFEFF}
-@media(max-width:520px){.choices-grid,.player-grid,.team-grid{gap:9px}.choice{min-height:82px;padding:16px 10px}.pin{font-size:40px}}
+button{touch-action:manipulation}
+#app{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+.navbar{
+  position:sticky;
+  top:0;
+  z-index:20;
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  background:rgba(255,255,255,.96);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);
+}
+.brand{
+  border:0;
+  background:none;
+  padding:0;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  cursor:pointer;
+  color:var(--text);
+}
+.mark{
+  width:31px;
+  height:31px;
+  border-radius:9px;
+  background:var(--accent);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+  font-weight:800;
+}
+.wordmark{
+  font-size:16px;
+  font-weight:800;
+}
+.tag{
+  padding:3px 8px;
+  border-radius:999px;
+  background:var(--accentSoft);
+  color:var(--accent);
+  font-size:10px;
+  font-weight:800;
+}
+.nav-meta{
+  color:var(--muted);
+  font-size:13px;
+}
+.nav-meta b{
+  color:var(--text);
+  letter-spacing:1px;
+}
+main{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  padding:30px 18px 60px;
+}
+.stage{
+  width:100%;
+  max-width:480px;
+}
+.stage.wide{
+  max-width:760px;
+}
+.title{
+  margin:0 0 7px;
+  font-size:25px;
+  line-height:1.3;
+  font-weight:800;
+}
+.sub{
+  margin:0 0 24px;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.65;
+}
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+}
+.home-choice{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.home-card{
+  width:100%;
+  text-align:left;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:15px;
+  padding:20px;
+  cursor:pointer;
+  transition:.15s;
+}
+.home-card:hover{
+  border-color:var(--accent);
+  background:var(--accentSoft);
+  transform:translateY(-1px);
+}
+.home-card h3{
+  margin:0 0 5px;
+  font-size:17px;
+}
+.home-card p{
+  margin:0;
+  color:var(--muted);
+  font-size:13.5px;
+}
+.field{
+  margin-bottom:17px;
+}
+label{
+  display:block;
+  margin-bottom:7px;
+  color:var(--muted);
+  font-size:12.5px;
+  font-weight:700;
+}
+input[type=text],
+input[type=tel],
+select{
+  width:100%;
+  padding:12px 13px;
+  border:1.5px solid var(--border);
+  border-radius:11px;
+  outline:none;
+  background:#fff;
+  color:var(--text);
+  font-size:15px;
+}
+input:focus,
+select:focus{
+  border-color:var(--accent);
+}
+.btn{
+  width:100%;
+  min-height:48px;
+  border:0;
+  border-radius:11px;
+  background:var(--accent);
+  color:#fff;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:13px 18px;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+  transition:.1s;
+}
+.btn:active{
+  transform:scale(.98);
+}
+.btn:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+  transform:none;
+}
+.btn.ghost{
+  background:#fff;
+  color:var(--text);
+  border:1.5px solid var(--border);
+}
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:18px;
+}
+.error{
+  margin-top:10px;
+  color:var(--bad);
+  font-size:13px;
+  line-height:1.5;
+}
+.note{
+  padding:12px 14px;
+  border-radius:11px;
+  background:var(--surface2);
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.55;
+}
+.mode-row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.mode{
+  flex:1;
+  min-width:70px;
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:11px 8px;
+  background:#fff;
+  color:var(--muted);
+  font-weight:800;
+  cursor:pointer;
+}
+.mode.active{
+  color:var(--accent);
+  background:var(--accentSoft);
+  border-color:var(--accent);
+}
+.pin-box{
+  margin-bottom:20px;
+  padding:24px 20px;
+  text-align:center;
+  background:var(--accentSoft);
+  border:1.5px dashed var(--accent);
+  border-radius:16px;
+}
+.plabel{
+  margin-bottom:6px;
+  color:var(--accent);
+  font-size:12px;
+  font-weight:800;
+}
+.pin{
+  font-size:46px;
+  line-height:1;
+  letter-spacing:7px;
+  font-weight:800;
+}
+.player-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.player-card{
+  padding:18px;
+  text-align:center;
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:15px;
+}
+.player-card.red{
+  border-color:#fdba74;
+  background:#fff7ed;
+}
+.player-card.cyan{
+  border-color:#a5f3fc;
+  background:#ecfeff;
+}
+.player-icon{
+  font-size:28px;
+}
+.player-name{
+  margin-top:5px;
+  font-weight:800;
+}
+.score{
+  margin-top:8px;
+  font-size:28px;
+  font-weight:800;
+}
+.team-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.team-col{
+  padding:16px;
+  border:1.5px solid var(--border);
+  border-radius:15px;
+  text-align:center;
+  background:#fff;
+}
+.team-col.red{
+  border-color:#fdba74;
+  background:#fff7ed;
+}
+.team-col.cyan{
+  border-color:#a5f3fc;
+  background:#ecfeff;
+}
+.team-icon{
+  font-size:26px;
+}
+.team-title{
+  margin-top:4px;
+  font-weight:800;
+}
+.team-score{
+  margin:7px 0 11px;
+  font-size:30px;
+  font-weight:800;
+}
+.team-members{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.team-member{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:7px 9px;
+  border-radius:8px;
+  background:rgba(255,255,255,.72);
+  font-size:13px;
+  font-weight:700;
+}
+.team-member.me{
+  outline:2px solid var(--accent);
+}
+.team-empty{
+  padding:8px 0;
+  color:var(--muted);
+  font-size:12px;
+}
+.center{
+  padding:45px 0;
+  text-align:center;
+}
+.big{
+  margin-bottom:8px;
+  font-size:48px;
+}
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:14px;
+  padding:5px 10px;
+  border-radius:999px;
+  background:var(--accentSoft);
+  color:var(--accent);
+  font-size:11px;
+  font-weight:800;
+}
+.countdown{
+  padding:30px 0;
+  text-align:center;
+}
+.countdown-number{
+  font-size:90px;
+  line-height:1;
+  font-weight:800;
+  color:var(--accent);
+  animation:pop .7s ease;
+}
+@keyframes pop{
+  0%{transform:scale(.65);opacity:.2}
+  70%{transform:scale(1.08)}
+  100%{transform:scale(1);opacity:1}
+}
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:15px;
+}
+.mini{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:700;
+}
+.timer-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:19px;
+}
+.timer-track{
+  flex:1;
+  height:8px;
+  overflow:hidden;
+  border-radius:999px;
+  background:var(--surface2);
+}
+.timer-fill{
+  height:100%;
+  border-radius:999px;
+  background:var(--accent);
+  transition:width .08s linear;
+}
+.timer-fill.urgent{
+  background:var(--bad);
+}
+.timer-num{
+  width:42px;
+  text-align:right;
+  color:var(--accent);
+  font-size:15px;
+  font-weight:800;
+}
+.timer-num.urgent{
+  color:var(--bad);
+}
+.qtext{
+  margin:0 0 18px;
+  font-size:21px;
+  line-height:1.45;
+  font-weight:800;
+}
+.choices-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.choice{
+  min-height:94px;
+  padding:18px 12px;
+  border:0;
+  border-radius:12px;
+  color:#fff;
+  text-align:left;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+}
+.choice.a{background:var(--red)}
+.choice.b{background:var(--cyan)}
+.choice.c{background:var(--yellow)}
+.choice.d{background:var(--purple)}
+.choice:disabled{
+  cursor:not-allowed;
+}
+.choice.dim{
+  opacity:.25;
+}
+.choice.picked{
+  outline:3px solid var(--text);
+  outline-offset:-3px;
+}
+.result-card{
+  margin-bottom:14px;
+  padding:27px 20px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:#fff;
+  text-align:center;
+}
+.result-score{
+  margin:8px 0 15px;
+  font-size:40px;
+  font-weight:800;
+}
+.winner{
+  color:var(--accent);
+  font-size:16px;
+  font-weight:800;
+}
+.lead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:8px;
+  padding:12px 14px;
+  border-radius:10px;
+  background:var(--surface2);
+}
+.lead.me{
+  border:1.5px solid var(--accent);
+}
+.lead .name{
+  font-weight:700;
+}
+.lead .pts{
+  color:var(--accent);
+  font-weight:800;
+}
+.progress-dots{
+  display:flex;
+  justify-content:center;
+  gap:5px;
+  margin:14px 0;
+}
+.progress-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#ddd;
+}
+.progress-dot.done{
+  background:var(--accent);
+}
+.progress-dot.current{
+  width:20px;
+  border-radius:999px;
+  background:var(--accent);
+}
+.leave{
+  margin-top:13px;
+  color:var(--muted);
+  font-size:12px;
+  text-align:center;
+}
+@media(max-width:520px){
+  main{
+    padding:23px 14px 45px;
+  }
+  .choices-grid,
+  .player-grid,
+  .team-grid{
+    gap:9px;
+  }
+  .choice{
+    min-height:82px;
+    padding:15px 10px;
+  }
+  .pin{
+    font-size:40px;
+  }
+  .qtext{
+    font-size:19px;
+  }
+}
 </style>
 </head>
 <body>
@@ -80,486 +565,1824 @@ input:focus,select:focus{border-color:var(--accent)}
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <script>
-(function(){
 "use strict";
-
-const HOME="https://semicolonxss.github.io/Formwheel/";
-const firebaseConfig={
-  apiKey:"AIzaSyBreTSe1m0-xlbF4aupnU5isRZCihR25IE",
-  authDomain:"formwheel.firebaseapp.com",
-  databaseURL:"https://formwheel-default-rtdb.firebaseio.com/",
-  projectId:"formwheel",
-  storageBucket:"formwheel.firebasestorage.app",
-  messagingSenderId:"431583088241",
-  appId:"1:431583088241:web:74e0e34ea1e3e1170c55d0"
+(() => {
+/* =========================================================
+   기본 설정
+========================================================= */
+const HOME = "https://semicolonxss.github.io/Formwheel/";
+const firebaseConfig = {
+  apiKey: "AIzaSyBreTSe1m0-xlbF4aupnU5isRZCihR25IE",
+  authDomain: "formwheel.firebaseapp.com",
+  databaseURL: "https://formwheel-default-rtdb.firebaseio.com/",
+  projectId: "formwheel",
+  storageBucket: "formwheel.firebasestorage.app",
+  messagingSenderId: "431583088241",
+  appId: "1:431583088241:web:74e0e34ea1e3e1170c55d0"
 };
-
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-
-const QUESTIONS=[
- {text:"다음 중 대한민국의 수도는 어디일까요?",choices:["부산","서울","인천","대구"],correct:1},
- {text:"물의 화학식은 무엇일까요?",choices:["CO2","O2","H2O","NaCl"],correct:2},
- {text:"태양계에서 가장 큰 행성은?",choices:["지구","목성","화성","토성"],correct:1},
- {text:"1년은 총 며칠일까요? (평년 기준)",choices:["364일","365일","366일","360일"],correct:1}
-];
-
-let screen="home", pin="", playerId="", playerName="", role="", mode="1v1", timeLimit=10;
-let qi=0, timer=null, unsub=[], picked=null, localStart=0;
-let hostName="", opponentName="상대를 기다리는 중";
-let hostScore=0, opponentScore=0, battleQuestions=QUESTIONS;
-let libraryQuizzes=[], selectedQuizId="";
-let teamSize=2, myTeam="A", teamAScore=0, teamBScore=0;
-
-function isTeamMode(){return mode==="team";}
-function teamCounts(arr){return {A:arr.filter(p=>p.team==="A").length,B:arr.filter(p=>p.team==="B").length};}
-function assignTeam(ps,size){
-  const arr=Object.values(ps||{});
-  const c=teamCounts(arr);
-  const aOpen=c.A<size, bOpen=c.B<size;
-  if(!aOpen&&!bOpen)return null;
-  if(aOpen&&(!bOpen||c.A<=c.B))return "A";
-  return "B";
-}
-
-const app=document.getElementById("app");
-
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function clearTimer(){if(timer){clearInterval(timer);timer=null;}}
-function cleanup(){unsub.forEach(fn=>{try{fn()}catch(e){}});unsub=[];clearTimer();}
-function nav(right=""){return `<div class="navbar"><button class="brand" id="brand"><span class="mark">F</span><span class="wordmark">FormWheel</span><span class="tag">Battle</span></button><span class="nav-meta">${right}</span></div>`;}
-function wire(){const b=document.getElementById("brand");if(b)b.onclick=()=>window.open(HOME,"_blank");}
-function go(s){cleanup();screen=s;render();}
-function pin4(){return Math.floor(1000+Math.random()*9000).toString();}
-function randomId(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
-function battleRef(){return db.ref("battle/"+pin);}
-function playersRef(){return battleRef().child("players");}
-
-function render(){
-  if(screen==="home")home();
-  else if(screen==="setup")setup();
-  else if(screen==="hostLobby")hostLobby();
-  else if(screen==="join")join();
-  else if(screen==="playerLobby")playerLobby();
-  else if(screen==="hostQuestion")hostQuestion();
-  else if(screen==="playerQuestion")playerQuestion();
-  else if(screen==="reveal")reveal();
-  else if(screen==="final")final();
-  wire();
-}
-
-function home(){
-app.innerHTML=nav()+`<main><div class="stage">
-<h1 class="title">Battle 만들기</h1>
-<p class="sub">Quiz의 문제를 이용해서 친구와 실시간으로 대결해보세요.</p>
-<div class="home-choice">
-<div class="home-card" id="make"><h3>⚔️ Battle 만들기</h3><p>Quiz를 선택하고 친구와 겨룰 Battle을 만들어요.</p></div>
-<div class="home-card" id="join"><h3>🚪 참가하기</h3><p>친구에게 받은 4자리 코드를 입력하고 참가해요.</p></div>
-</div></div></main>`;
-document.getElementById("make").onclick=()=>{role="host";go("setup")};
-document.getElementById("join").onclick=()=>{role="player";go("join")};
-}
-
-async function setup(){
-mode="1v1";
-app.innerHTML=nav()+`<main><div class="stage">
-<h1 class="title">Battle 만들기</h1>
-<p class="sub">Quiz를 선택하고 친구에게 4자리 코드를 보내세요.</p>
-<div class="card">
-<div class="field"><label>내 닉네임</label><input id="hostName" type="text" maxlength="12" placeholder="닉네임을 입력해주세요"></div>
-<div class="field"><label>사용할 Quiz</label><select id="quiz"><option>불러오는 중…</option></select></div>
-<div class="field"><label>Battle 방식</label><div class="mode-row" id="modeRow"><button class="mode active" data-mode="1v1">⚔️ 1 vs 1</button><button class="mode" data-mode="team">👥 팀전</button></div></div>
-<div class="field" id="teamSizeField" style="display:none"><label>팀당 인원</label><div class="mode-row" id="teamSizeRow">${[2,3,4].map(t=>`<button class="mode ${teamSize===t?"active":""}" data-team-size="${t}">${t} vs ${t}</button>`).join("")}</div></div>
-<div class="field"><label>문제당 제한 시간</label><div class="mode-row" id="timeRow">${[10,15,20,30].map(t=>`<button class="mode ${timeLimit===t?"active":""}" data-time="${t}">${t}초</button>`).join("")}</div></div>
-<div class="note" id="quizNote">FormWheel Quiz에서 만든 문제를 그대로 가져와서 Battle에 쓸 수 있어요.</div>
-<button class="btn" id="create">⚔️ Battle 만들고 코드 받기</button>
-<div class="error" id="err"></div>
-</div></div></main>`;
-wire();
-document.querySelectorAll("[data-time]").forEach(b=>b.onclick=()=>{timeLimit=+b.dataset.time;updateTimeButtons()});
-document.querySelectorAll("[data-team-size]").forEach(b=>b.onclick=()=>{teamSize=+b.dataset.teamSize;updateTeamSizeButtons()});
-document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
-  mode=b.dataset.mode;
-  document.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("active",x.dataset.mode===mode));
-  document.getElementById("teamSizeField").style.display=mode==="team"?"":"none";
-  const startBtnLabel=document.getElementById("create");
-  if(startBtnLabel)startBtnLabel.textContent=mode==="team"?"👥 팀전 Battle 만들고 코드 받기":"⚔️ Battle 만들고 코드 받기";
-});
-
-try{
-  const snap=await db.ref("quizzes").once("value");
-  const val=snap.val()||{};
-  libraryQuizzes=Object.entries(val).map(([id,q])=>({id,...q})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-}catch(e){libraryQuizzes=[];}
-
-const sel=document.getElementById("quiz");
-if(!sel)return; // 화면이 이미 바뀐 경우
-if(libraryQuizzes.length===0){
-  sel.innerHTML=`<option value="">🧠 기본 Quiz — 4문제</option>`;
-  battleQuestions=QUESTIONS;selectedQuizId="";
-  document.getElementById("quizNote").textContent="아직 FormWheel Quiz에서 만든 문제가 없어서, 기본 샘플 문제로 진행돼요.";
-}else{
-  sel.innerHTML=libraryQuizzes.map(q=>`<option value="${q.id}">📝 ${esc(q.title||"제목 없는 Quiz")} — ${(q.questions||[]).length}문제</option>`).join("")
-    +`<option value="">🧠 기본 Quiz — 4문제</option>`;
-  const first=libraryQuizzes[0];
-  battleQuestions=first.questions||QUESTIONS;selectedQuizId=first.id;
-  if(first.timeLimit)timeLimit=first.timeLimit;
-  document.getElementById("quizNote").textContent="FormWheel Quiz에서 만든 문제 목록이에요. 고르면 그 문제 그대로 Battle이 시작돼요.";
-}
-sel.onchange=()=>{
-  const chosen=libraryQuizzes.find(q=>q.id===sel.value);
-  if(chosen){
-    battleQuestions=chosen.questions||QUESTIONS;selectedQuizId=chosen.id;
-    if(chosen.timeLimit){timeLimit=chosen.timeLimit;updateTimeButtons();}
-  }else{
-    battleQuestions=QUESTIONS;selectedQuizId="";
+const db = firebase.database();
+/*
+  Battle 상태
+  waiting    = 로비
+  countdown  = 시작 카운트다운
+  playing    = 문제 풀이
+  result     = 라운드 결과
+  finished   = 최종 결과
+*/
+const PHASE = {
+  WAITING: "waiting",
+  COUNTDOWN: "countdown",
+  PLAYING: "playing",
+  RESULT: "result",
+  FINISHED: "finished"
+};
+const DEFAULT_QUESTIONS = [
+  {
+    text:"다음 중 대한민국의 수도는 어디일까요?",
+    choices:["부산","서울","인천","대구"],
+    correct:1
+  },
+  {
+    text:"물의 화학식은 무엇일까요?",
+    choices:["CO₂","O₂","H₂O","NaCl"],
+    correct:2
+  },
+  {
+    text:"태양계에서 가장 큰 행성은?",
+    choices:["지구","목성","화성","토성"],
+    correct:1
+  },
+  {
+    text:"평년의 1년은 며칠일까요?",
+    choices:["364일","365일","366일","360일"],
+    correct:1
   }
-};
-updateTimeButtons();
-
-document.getElementById("create").onclick=async()=>{
-  const n=document.getElementById("hostName").value.trim(),err=document.getElementById("err");
-  if(!n){err.textContent="닉네임을 입력해주세요.";return}
-  if(!battleQuestions||battleQuestions.length===0){err.textContent="문제가 없어요. 다른 Quiz를 선택해주세요.";return}
-  const p=pin4(), id=randomId();
+];
+const SESSION_KEY = "formwheel_battle_session_v3";
+/* =========================================================
+   로컬 상태
+========================================================= */
+let screen = "home";
+let pin = "";
+let playerId = "";
+let playerName = "";
+let role = "";
+let mode = "1v1";
+let teamSize = 2;
+let myTeam = "A";
+let timeLimit = 10;
+let questionIndex = 0;
+let questions = DEFAULT_QUESTIONS.slice();
+let selectedQuizId = "";
+let listeners = [];
+let timer = null;
+let stateData = null;
+let submitted = false;
+let countdownShown = -1;
+let renderToken = 0;
+/* =========================================================
+   유틸
+========================================================= */
+function esc(value){
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[c]));
+}
+function randomId(){
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+function makePin(){
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+function clearTimer(){
+  if(timer){
+    clearInterval(timer);
+    timer = null;
+  }
+}
+function removeListeners(){
+  listeners.forEach(fn => {
+    try{ fn(); }catch(_){}
+  });
+  listeners = [];
+}
+function cleanup(){
+  clearTimer();
+  removeListeners();
+}
+function battleRef(){
+  return db.ref("battle/" + pin);
+}
+function playersRef(){
+  return battleRef().child("players");
+}
+function stateRef(){
+  return battleRef().child("state");
+}
+function currentQuestion(){
+  return questions[questionIndex] || DEFAULT_QUESTIONS[0];
+}
+function saveSession(){
+  if(!pin || !playerId) return;
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    pin,
+    playerId,
+    playerName,
+    role,
+    mode,
+    teamSize,
+    myTeam,
+    timeLimit,
+    questionIndex,
+    selectedQuizId
+  }));
+}
+function loadSession(){
   try{
-    const snap=await db.ref("battle/"+p).once("value");
-    if(snap.exists()){document.getElementById("create").click();return}
-    pin=p;playerId=id;playerName=n;hostName=n;myTeam="A";
-    const hostPlayer={name:n,score:0,role:"host",joinedAt:firebase.database.ServerValue.TIMESTAMP};
-    if(isTeamMode())hostPlayer.team="A";
-    await battleRef().set({
-      meta:{hostId:id,hostName:n,mode,teamSize:isTeamMode()?teamSize:null,timeLimit,createdAt:firebase.database.ServerValue.TIMESTAMP,questions:battleQuestions},
-      state:{phase:"lobby",round:-1,startedAt:0},
-      players:{[id]:hostPlayer}
+    const data = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+    return data || null;
+  }catch(_){
+    return null;
+  }
+}
+function clearSession(){
+  localStorage.removeItem(SESSION_KEY);
+}
+function openHome(){
+  window.location.href = HOME;
+}
+function isTeam(){
+  return mode === "team";
+}
+function getPlayersArray(value){
+  return Object.entries(value || {}).map(([id,p]) => ({
+    id,
+    ...(p || {})
+  }));
+}
+function teamCounts(players){
+  return {
+    A: players.filter(p => p.team === "A").length,
+    B: players.filter(p => p.team === "B").length
+  };
+}
+function autoTeam(players){
+  const c = teamCounts(players);
+  if(c.A >= teamSize && c.B >= teamSize) return null;
+  if(c.A <= c.B && c.A < teamSize) return "A";
+  if(c.B < teamSize) return "B";
+  return "A";
+}
+function teamScore(players, team){
+  return players
+    .filter(p => p.team === team)
+    .reduce((sum,p) => sum + Number(p.score || 0), 0);
+}
+function allAnswered(players, round){
+  if(players.length < (isTeam() ? 2 : 2)) return false;
+  return players.every(p =>
+    p.answers &&
+    p.answers[String(round)] &&
+    p.answers[String(round)].submitted === true
+  );
+}
+/* =========================================================
+   화면 공통
+========================================================= */
+function navbar(meta = ""){
+  return `
+    <div class="navbar">
+      <button class="brand" id="brandBtn">
+        <span class="mark">F</span>
+        <span class="wordmark">FormWheel</span>
+        <span class="tag">Battle</span>
+      </button>
+      <span class="nav-meta">${meta}</span>
+    </div>
+  `;
+}
+function bindBrand(){
+  const btn = document.getElementById("brandBtn");
+  if(btn) btn.onclick = openHome;
+}
+function setScreen(next){
+  cleanup();
+  screen = next;
+  render();
+}
+function render(){
+  renderToken++;
+  if(screen === "home") renderHome();
+  else if(screen === "setup") renderSetup();
+  else if(screen === "hostLobby") renderHostLobby();
+  else if(screen === "join") renderJoin();
+  else if(screen === "playerLobby") renderPlayerLobby();
+  else if(screen === "countdown") renderCountdown();
+  else if(screen === "playing") renderPlaying();
+  else if(screen === "result") renderResult();
+  else if(screen === "finished") renderFinished();
+  bindBrand();
+}
+/* =========================================================
+   HOME
+========================================================= */
+function renderHome(){
+  document.getElementById("app").innerHTML =
+    navbar() +
+    `
+    <main>
+      <div class="stage">
+        <h1 class="title">Battle</h1>
+        <p class="sub">
+          Quiz를 이용해서 친구와 실시간으로 대결해보세요.
+        </p>
+        <div class="home-choice">
+          <button class="home-card" id="createBattle">
+            <h3>⚔️ Battle 만들기</h3>
+            <p>Quiz와 제한 시간을 선택하고 Battle을 만들어보세요.</p>
+          </button>
+          <button class="home-card" id="joinBattle">
+            <h3>🚪 Battle 참가하기</h3>
+            <p>친구에게 받은 4자리 코드로 참가합니다.</p>
+          </button>
+        </div>
+      </div>
+    </main>
+    `;
+  document.getElementById("createBattle").onclick = () => {
+    role = "host";
+    renderSetup();
+  };
+  document.getElementById("joinBattle").onclick = () => {
+    role = "player";
+    renderJoin();
+  };
+}
+/* =========================================================
+   SETUP
+========================================================= */
+async function renderSetup(){
+  screen = "setup";
+  document.getElementById("app").innerHTML =
+    navbar() +
+    `
+    <main>
+      <div class="stage">
+        <h1 class="title">Battle 만들기</h1>
+        <p class="sub">
+          Quiz와 Battle 방식을 선택하세요.
+        </p>
+        <div class="card">
+          <div class="field">
+            <label>내 닉네임</label>
+            <input
+              id="hostName"
+              type="text"
+              maxlength="12"
+              placeholder="닉네임을 입력해주세요"
+            >
+          </div>
+          <div class="field">
+            <label>Quiz</label>
+            <select id="quizSelect">
+              <option>불러오는 중...</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Battle 방식</label>
+            <div class="mode-row">
+              <button class="mode active" data-mode="1v1">⚔️ 1 vs 1</button>
+              <button class="mode" data-mode="team">👥 팀전</button>
+            </div>
+          </div>
+          <div
+            class="field"
+            id="teamSizeField"
+            style="display:none"
+          >
+            <label>팀당 인원</label>
+            <div class="mode-row">
+              <button class="mode active" data-team="2">2 vs 2</button>
+              <button class="mode" data-team="3">3 vs 3</button>
+              <button class="mode" data-team="4">4 vs 4</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>문제당 제한 시간</label>
+            <div class="mode-row">
+              <button class="mode active" data-time="10">10초</button>
+              <button class="mode" data-time="15">15초</button>
+              <button class="mode" data-time="20">20초</button>
+              <button class="mode" data-time="30">30초</button>
+            </div>
+          </div>
+          <div class="note" id="quizInfo">
+            Quiz 목록을 불러오는 중입니다.
+          </div>
+          <button class="btn" id="createBtn">
+            ⚔️ Battle 만들기
+          </button>
+          <div class="error" id="setupError"></div>
+        </div>
+      </div>
+    </main>
+    `;
+  bindBrand();
+  document.querySelectorAll("[data-mode]").forEach(btn => {
+    btn.onclick = () => {
+      mode = btn.dataset.mode;
+      document.querySelectorAll("[data-mode]").forEach(b =>
+        b.classList.toggle("active", b === btn)
+      );
+      document.getElementById("teamSizeField").style.display =
+        mode === "team" ? "" : "none";
+    };
+  });
+  document.querySelectorAll("[data-team]").forEach(btn => {
+    btn.onclick = () => {
+      teamSize = Number(btn.dataset.team);
+      document.querySelectorAll("[data-team]").forEach(b =>
+        b.classList.toggle("active", b === btn)
+      );
+    };
+  });
+  document.querySelectorAll("[data-time]").forEach(btn => {
+    btn.onclick = () => {
+      timeLimit = Number(btn.dataset.time);
+      document.querySelectorAll("[data-time]").forEach(b =>
+        b.classList.toggle("active", b === btn)
+      );
+    };
+  });
+  await loadQuizList();
+  const createBtn = document.getElementById("createBtn");
+  createBtn.onclick = createBattle;
+}
+/* =========================================================
+   QUIZ 목록
+========================================================= */
+async function loadQuizList(){
+  const select = document.getElementById("quizSelect");
+  const info = document.getElementById("quizInfo");
+  if(!select) return;
+  let list = [];
+  try{
+    const snap = await db.ref("quizzes").once("value");
+    const value = snap.val() || {};
+    list = Object.entries(value).map(([id,q]) => ({
+      id,
+      ...(q || {})
+    }));
+  }catch(error){
+    console.error(error);
+  }
+  if(list.length === 0){
+    questions = DEFAULT_QUESTIONS.slice();
+    selectedQuizId = "";
+    select.innerHTML =
+      `<option value="">🧠 기본 Quiz — ${questions.length}문제</option>`;
+    info.textContent =
+      "저장된 Quiz가 없어 기본 Quiz를 사용합니다.";
+    return;
+  }
+  select.innerHTML =
+    list.map(q => `
+      <option value="${esc(q.id)}">
+        📝 ${esc(q.title || "제목 없는 Quiz")}
+        — ${(q.questions || []).length}문제
+      </option>
+    `).join("") +
+    `<option value="">🧠 기본 Quiz — ${DEFAULT_QUESTIONS.length}문제</option>`;
+  const first = list[0];
+  selectedQuizId = first.id;
+  questions = Array.isArray(first.questions) && first.questions.length
+    ? first.questions
+    : DEFAULT_QUESTIONS.slice();
+  info.textContent =
+    `현재 선택: ${first.title || "제목 없는 Quiz"} · ${questions.length}문제`;
+  select.onchange = () => {
+    const selected = list.find(q => q.id === select.value);
+    if(!selected){
+      selectedQuizId = "";
+      questions = DEFAULT_QUESTIONS.slice();
+      info.textContent =
+        `기본 Quiz · ${questions.length}문제`;
+      return;
+    }
+    selectedQuizId = selected.id;
+    questions =
+      Array.isArray(selected.questions) && selected.questions.length
+      ? selected.questions
+      : DEFAULT_QUESTIONS.slice();
+    info.textContent =
+      `현재 선택: ${selected.title || "제목 없는 Quiz"} · ${questions.length}문제`;
+  };
+}
+/* =========================================================
+   방 생성
+========================================================= */
+async function createBattle(){
+  const nameInput = document.getElementById("hostName");
+  const error = document.getElementById("setupError");
+  const name = nameInput.value.trim();
+  if(!name){
+    error.textContent = "닉네임을 입력해주세요.";
+    return;
+  }
+  if(!questions.length){
+    error.textContent = "사용할 문제가 없습니다.";
+    return;
+  }
+  const btn = document.getElementById("createBtn");
+  btn.disabled = true;
+  btn.textContent = "Battle 생성 중...";
+  try{
+    let newPin = "";
+    for(let i=0;i<10;i++){
+      const candidate = makePin();
+      const snap = await db.ref("battle/" + candidate).once("value");
+      if(!snap.exists()){
+        newPin = candidate;
+        break;
+      }
+    }
+    if(!newPin){
+      throw new Error("방 코드를 생성하지 못했습니다.");
+    }
+    pin = newPin;
+    playerId = randomId();
+    playerName = name;
+    role = "host";
+    myTeam = "A";
+    questionIndex = 0;
+    const player = {
+      name,
+      role:"host",
+      team:mode === "team" ? "A" : null,
+      score:0,
+      connected:true,
+      joinedAt:firebase.database.ServerValue.TIMESTAMP,
+      lastSeenAt:firebase.database.ServerValue.TIMESTAMP
+    };
+    const roomData = {
+      meta:{
+        hostId:playerId,
+        hostName:name,
+        mode,
+        teamSize:mode === "team" ? teamSize : null,
+        timeLimit,
+        quizId:selectedQuizId,
+        questionCount:questions.length,
+        questions:questions
+      },
+      state:{
+        phase:PHASE.WAITING,
+        round:-1,
+        countdownEndsAt:0,
+        roundStartedAt:0,
+        roundEndsAt:0,
+        resultEndsAt:0,
+        updatedAt:firebase.database.ServerValue.TIMESTAMP
+      },
+      players:{
+        [playerId]:player
+      }
+    };
+    await db.ref("battle/" + pin).set(roomData);
+    saveSession();
+    screen = "hostLobby";
+    render();
+    subscribeRoom();
+  }catch(errorObj){
+    console.error(errorObj);
+    error.textContent =
+      "Battle 생성 실패: " + errorObj.message;
+    btn.disabled = false;
+    btn.textContent = "⚔️ Battle 만들기";
+  }
+}
+/* =========================================================
+   HOST LOBBY
+========================================================= */
+function renderHostLobby(){
+  document.getElementById("app").innerHTML =
+    navbar(`코드 <b>${pin}</b>`) +
+    `
+    <main>
+      <div class="stage wide">
+        <div class="pin-box">
+          <div class="plabel">Battle 참가 코드</div>
+          <div class="pin">${pin}</div>
+        </div>
+        <p class="sub" style="text-align:center">
+          친구에게 코드를 알려주세요.
+          참가하면 자동으로 표시됩니다.
+        </p>
+        <div id="lobbyContent"></div>
+        <div class="actions">
+          <button class="btn" id="startBattle" disabled>
+            참가자를 기다리는 중...
+          </button>
+          <button class="btn ghost" id="leaveBattle">
+            방 나가기
+          </button>
+        </div>
+        <div class="error" id="lobbyError"></div>
+      </div>
+    </main>
+    `;
+  document.getElementById("leaveBattle").onclick =
+    () => leaveRoom(true);
+  subscribeRoom();
+}
+/* =========================================================
+   JOIN
+========================================================= */
+function renderJoin(){
+  document.getElementById("app").innerHTML =
+    navbar() +
+    `
+    <main>
+      <div class="stage">
+        <h1 class="title">Battle 참가하기</h1>
+        <p class="sub">
+          친구에게 받은 코드와 닉네임을 입력하세요.
+        </p>
+        <div class="card">
+          <div class="field">
+            <label>Battle 코드</label>
+            <input
+              id="joinPin"
+              type="tel"
+              maxlength="4"
+              inputmode="numeric"
+              placeholder="예: 4821"
+            >
+          </div>
+          <div class="field">
+            <label>닉네임</label>
+            <input
+              id="joinName"
+              type="text"
+              maxlength="12"
+              placeholder="닉네임"
+            >
+          </div>
+          <button class="btn" id="joinBtn">
+            🚪 참가하기
+          </button>
+          <div class="error" id="joinError"></div>
+          <button
+            class="btn ghost"
+            id="joinBack"
+            style="margin-top:10px"
+          >
+            뒤로가기
+          </button>
+        </div>
+      </div>
+    </main>
+    `;
+  document.getElementById("joinBack").onclick =
+    () => setScreen("home");
+  document.getElementById("joinBtn").onclick =
+    joinBattle;
+}
+/* =========================================================
+   방 참가
+========================================================= */
+async function joinBattle(){
+  const pinInput = document.getElementById("joinPin");
+  const nameInput = document.getElementById("joinName");
+  const error = document.getElementById("joinError");
+  const btn = document.getElementById("joinBtn");
+  const code = pinInput.value.trim();
+  const name = nameInput.value.trim();
+  if(!/^\d{4}$/.test(code)){
+    error.textContent = "4자리 Battle 코드를 입력해주세요.";
+    return;
+  }
+  if(!name){
+    error.textContent = "닉네임을 입력해주세요.";
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "참가 중...";
+  try{
+    const roomSnap =
+      await db.ref("battle/" + code).once("value");
+    if(!roomSnap.exists()){
+      throw new Error("존재하지 않는 Battle입니다.");
+    }
+    const room = roomSnap.val();
+    const phase =
+      room.state?.phase || PHASE.WAITING;
+    if(phase !== PHASE.WAITING){
+      throw new Error("이미 시작된 Battle입니다.");
+    }
+    const players = getPlayersArray(room.players);
+    mode =
+      room.meta?.mode === "team"
+      ? "team"
+      : "1v1";
+    teamSize =
+      Number(room.meta?.teamSize || 2);
+    if(mode === "1v1"){
+      if(players.some(p => p.role === "player")){
+        throw new Error("이미 상대 플레이어가 참가했습니다.");
+      }
+    }else{
+      const team = autoTeam(players);
+      if(!team){
+        throw new Error("Battle 인원이 가득 찼습니다.");
+      }
+      myTeam = team;
+    }
+    pin = code;
+    playerId = randomId();
+    playerName = name;
+    role = "player";
+    timeLimit =
+      Number(room.meta?.timeLimit || 10);
+    questions =
+      Array.isArray(room.meta?.questions) &&
+      room.meta.questions.length
+      ? room.meta.questions
+      : DEFAULT_QUESTIONS.slice();
+    questionIndex = 0;
+    const player = {
+      name,
+      role:"player",
+      team:mode === "team" ? myTeam : null,
+      score:0,
+      connected:true,
+      joinedAt:firebase.database.ServerValue.TIMESTAMP,
+      lastSeenAt:firebase.database.ServerValue.TIMESTAMP
+    };
+    await db.ref(
+      "battle/" + pin + "/players/" + playerId
+    ).set(player);
+    saveSession();
+    screen = "playerLobby";
+    render();
+    subscribeRoom();
+  }catch(errorObj){
+    error.textContent =
+      errorObj.message;
+    btn.disabled = false;
+    btn.textContent = "🚪 참가하기";
+  }
+}
+/* =========================================================
+   PLAYER LOBBY
+========================================================= */
+function renderPlayerLobby(){
+  document.getElementById("app").innerHTML =
+    navbar(`코드 <b>${pin}</b>`) +
+    `
+    <main>
+      <div class="stage wide">
+        <div class="center">
+          <div class="status-pill">
+            ● WAITING
+          </div>
+          <div class="big">
+            ${isTeam() ? (myTeam === "A" ? "🔥" : "💧") : "⚔️"}
+          </div>
+          <h1 class="title">
+            ${esc(playerName)}님, 참가 완료!
+          </h1>
+          <p class="sub">
+            진행자가 Battle을 시작하면
+            자동으로 카운트다운이 시작됩니다.
+          </p>
+        </div>
+        <div id="lobbyContent"></div>
+        <button class="btn ghost" id="leaveBattle">
+          방 나가기
+        </button>
+      </div>
+    </main>
+    `;
+  document.getElementById("leaveBattle").onclick =
+    () => leaveRoom(true);
+  subscribeRoom();
+}
+/* =========================================================
+   방 실시간 동기화
+========================================================= */
+function subscribeRoom(){
+  cleanup();
+  if(!pin || !playerId) return;
+  const roomRef = battleRef();
+  const callback = snap => {
+    if(!snap.exists()){
+      clearSession();
+      if(screen !== "home"){
+        screen = "home";
+        render();
+      }
+      return;
+    }
+    const room = snap.val();
+    stateData = room.state || {};
+    const meta = room.meta || {};
+    if(meta.mode){
+      mode = meta.mode;
+    }
+    if(meta.teamSize){
+      teamSize = Number(meta.teamSize);
+    }
+    if(meta.timeLimit){
+      timeLimit = Number(meta.timeLimit);
+    }
+    if(Array.isArray(meta.questions) && meta.questions.length){
+      questions = meta.questions;
+    }
+    const me = room.players?.[playerId];
+    if(!me){
+      clearSession();
+      screen = "home";
+      render();
+      return;
+    }
+    if(me.team){
+      myTeam = me.team;
+    }
+    saveSession();
+    syncLobby(room);
+    syncPhase(room);
+  };
+  roomRef.on("value", callback);
+  listeners.push(() =>
+    roomRef.off("value", callback)
+  );
+}
+/* =========================================================
+   로비 UI 동기화
+========================================================= */
+function syncLobby(room){
+  const target =
+    document.getElementById("lobbyContent");
+  if(!target) return;
+  const players =
+    getPlayersArray(room.players);
+  if(isTeam()){
+    target.innerHTML =
+      renderTeamGrid(players);
+  }else{
+    const host =
+      players.find(p => p.role === "host");
+    const opponent =
+      players.find(p => p.role === "player");
+    target.innerHTML = `
+      <div class="player-grid">
+        <div class="player-card red">
+          <div class="player-icon">🔥</div>
+          <div class="player-name">
+            ${esc(host?.name || "진행자")}
+          </div>
+          <div class="score">
+            ${host?.score || 0}
+          </div>
+        </div>
+        <div class="player-card cyan">
+          <div class="player-icon">💧</div>
+          <div class="player-name">
+            ${esc(opponent?.name || "상대를 기다리는 중")}
+          </div>
+          <div class="score">
+            ${opponent ? opponent.score || 0 : "—"}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  const start =
+    document.getElementById("startBattle");
+  if(start){
+    const canStart =
+      isTeam()
+      ? players.some(p => p.team === "A") &&
+        players.some(p => p.team === "B")
+      : players.filter(p => p.role === "player").length === 1;
+    start.disabled = !canStart;
+    start.textContent =
+      canStart
+      ? "⚔️ Battle 시작하기"
+      : "참가자를 기다리는 중...";
+    start.onclick =
+      startBattle;
+  }
+}
+function renderTeamGrid(players){
+  const a =
+    players.filter(p => p.team === "A");
+  const b =
+    players.filter(p => p.team === "B");
+  const member = p => `
+    <div class="team-member ${p.id === playerId ? "me" : ""}">
+      <span>
+        ${p.role === "host" ? "👑 " : ""}
+        ${esc(p.name)}
+      </span>
+      <span>${Number(p.score || 0)}점</span>
+    </div>
+  `;
+  return `
+    <div class="team-grid">
+      <div class="team-col red">
+        <div class="team-icon">🔥</div>
+        <div class="team-title">
+          팀 A · ${a.length}/${teamSize}
+        </div>
+        <div class="team-score">
+          ${teamScore(players,"A")}
+        </div>
+        <div class="team-members">
+          ${
+            a.length
+            ? a.map(member).join("")
+            : `<div class="team-empty">아직 팀원이 없습니다.</div>`
+          }
+        </div>
+      </div>
+      <div class="team-col cyan">
+        <div class="team-icon">💧</div>
+        <div class="team-title">
+          팀 B · ${b.length}/${teamSize}
+        </div>
+        <div class="team-score">
+          ${teamScore(players,"B")}
+        </div>
+        <div class="team-members">
+          ${
+            b.length
+            ? b.map(member).join("")
+            : `<div class="team-empty">아직 팀원이 없습니다.</div>`
+          }
+        </div>
+      </div>
+    </div>
+  `;
+}
+/* =========================================================
+   상태 머신 동기화
+========================================================= */
+function syncPhase(room){
+  const state =
+    room.state || {};
+  const phase =
+    state.phase || PHASE.WAITING;
+  const round =
+    Number(state.round ?? -1);
+  if(
+    phase === PHASE.WAITING
+  ){
+    questionIndex = Math.max(0,round);
+    if(role === "host" && screen !== "hostLobby"){
+      screen = "hostLobby";
+      render();
+    }
+    if(role === "player" && screen !== "playerLobby"){
+      screen = "playerLobby";
+      render();
+    }
+    return;
+  }
+  if(
+    phase === PHASE.COUNTDOWN
+  ){
+    questionIndex = Math.max(0,round);
+    if(screen !== "countdown"){
+      screen = "countdown";
+      render();
+    }
+    updateCountdown(state);
+    return;
+  }
+  if(
+    phase === PHASE.PLAYING
+  ){
+    questionIndex = Math.max(0,round);
+    if(screen !== "playing"){
+      submitted = false;
+      screen = "playing";
+      render();
+    }
+    updatePlayingTimer(state);
+    return;
+  }
+  if(
+    phase === PHASE.RESULT
+  ){
+    questionIndex = Math.max(0,round);
+    if(screen !== "result"){
+      screen = "result";
+      render();
+    }
+    return;
+  }
+  if(
+    phase === PHASE.FINISHED
+  ){
+    if(screen !== "finished"){
+      screen = "finished";
+      render();
+    }
+    return;
+  }
+}
+/* =========================================================
+   Battle 시작
+========================================================= */
+async function startBattle(){
+  if(role !== "host") return;
+  const snap =
+    await playersRef().once("value");
+  const players =
+    getPlayersArray(snap.val());
+  if(
+    isTeam()
+    ? !players.some(p => p.team === "A") ||
+      !players.some(p => p.team === "B")
+    : players.filter(p => p.role === "player").length !== 1
+  ){
+    return;
+  }
+  const now = Date.now();
+  await stateRef().set({
+    phase:PHASE.COUNTDOWN,
+    round:0,
+    countdownEndsAt:now + 3000,
+    roundStartedAt:0,
+    roundEndsAt:0,
+    resultEndsAt:0,
+    updatedAt:firebase.database.ServerValue.TIMESTAMP
+  });
+}
+/* =========================================================
+   COUNTDOWN
+========================================================= */
+function renderCountdown(){
+  document.getElementById("app").innerHTML =
+    navbar(`코드 <b>${pin}</b>`) +
+    `
+    <main>
+      <div class="stage">
+        <div class="countdown">
+          <div class="status-pill">
+            ● COUNTDOWN
+          </div>
+          <div
+            class="countdown-number"
+            id="countdownNumber"
+          >
+            3
+          </div>
+          <p class="sub">
+            곧 문제가 시작됩니다.
+          </p>
+        </div>
+      </div>
+    </main>
+    `;
+  updateCountdown(stateData || {});
+}
+function updateCountdown(state){
+  const end =
+    Number(state.countdownEndsAt || 0);
+  if(!end) return;
+  clearTimer();
+  const tick = async () => {
+    const remain =
+      Math.max(
+        0,
+        end - Date.now()
+      );
+    const number =
+      Math.ceil(remain / 1000);
+    const el =
+      document.getElementById("countdownNumber");
+    if(el){
+      el.textContent =
+        number > 0
+        ? number
+        : "GO!";
+      el.style.animation = "none";
+      void el.offsetWidth;
+      el.style.animation = "pop .7s ease";
+    }
+    if(remain <= 0){
+      clearTimer();
+      if(role === "host"){
+        const snap =
+          await stateRef().once("value");
+        const current =
+          snap.val() || {};
+        if(
+          current.phase === PHASE.COUNTDOWN &&
+          Number(current.round) === Number(state.round)
+        ){
+          const now = Date.now();
+          await stateRef().update({
+            phase:PHASE.PLAYING,
+            roundStartedAt:now,
+            roundEndsAt:now + timeLimit * 1000,
+            updatedAt:firebase.database.ServerValue.TIMESTAMP
+          });
+        }
+      }
+    }
+  };
+  tick();
+  timer =
+    setInterval(tick,100);
+}
+/* =========================================================
+   PLAYING
+========================================================= */
+function renderPlaying(){
+  submitted = false;
+  const q = currentQuestion();
+  document.getElementById("app").innerHTML =
+    navbar(`코드 <b>${pin}</b>`) +
+    `
+    <main>
+      <div class="stage wide">
+        <div class="topbar">
+          <span class="mini">
+            ROUND ${questionIndex + 1} / ${questions.length}
+          </span>
+          <span
+            class="mini"
+            id="scoreText"
+          >
+            점수 불러오는 중...
+          </span>
+        </div>
+        <div class="timer-row">
+          <div class="timer-track">
+            <div
+              class="timer-fill"
+              id="timerFill"
+              style="width:100%"
+            ></div>
+          </div>
+          <div
+            class="timer-num"
+            id="timerNumber"
+          >
+            ${timeLimit}s
+          </div>
+        </div>
+        <div class="progress-dots">
+          ${
+            questions.map((_,i) => `
+              <span class="
+                progress-dot
+                ${i < questionIndex ? "done" : ""}
+                ${i === questionIndex ? "current" : ""}
+              "></span>
+            `).join("")
+          }
+        </div>
+        <div class="card">
+          <h2 class="qtext">
+            ${esc(q.text)}
+          </h2>
+          <div
+            class="choices-grid"
+            id="choices"
+          >
+            ${
+              q.choices.map((choice,i) => `
+                <button
+                  class="choice ${["a","b","c","d"][i] || "a"}"
+                  data-index="${i}"
+                >
+                  ${esc(choice)}
+                </button>
+              `).join("")
+            }
+          </div>
+          <div
+            class="note"
+            id="answerStatus"
+            style="margin-top:15px;text-align:center"
+          >
+            정답을 선택하세요.
+          </div>
+        </div>
+        <div class="leave">
+          페이지를 닫거나 나가면 자동으로 퇴장 처리됩니다.
+        </div>
+      </div>
+    </main>
+    `;
+  document.querySelectorAll("[data-index]").forEach(btn => {
+    btn.onclick = () =>
+      submitAnswer(Number(btn.dataset.index));
+  });
+  updateScoreUI();
+  updatePlayingTimer(stateData || {});
+}
+/* =========================================================
+   PLAYING 타이머
+========================================================= */
+function updatePlayingTimer(state){
+  const end =
+    Number(state.roundEndsAt || 0);
+  if(!end) return;
+  clearTimer();
+  const tick = async () => {
+    const remainMs =
+      Math.max(
+        0,
+        end - Date.now()
+      );
+    const remain =
+      Math.ceil(remainMs / 1000);
+    const percent =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          remainMs / (timeLimit * 1000) * 100
+        )
+      );
+    const fill =
+      document.getElementById("timerFill");
+    const number =
+      document.getElementById("timerNumber");
+    if(fill){
+      fill.style.width = percent + "%";
+      if(remain <= 5){
+        fill.classList.add("urgent");
+      }
+    }
+    if(number){
+      number.textContent =
+        remain + "s";
+      if(remain <= 5){
+        number.classList.add("urgent");
+      }
+    }
+    if(remainMs <= 0){
+      clearTimer();
+      if(!submitted){
+        await submitAnswer(-1);
+      }
+      if(role === "host"){
+        await tryFinishRound();
+      }
+    }
+  };
+  tick();
+  timer =
+    setInterval(tick,100);
+}
+/* =========================================================
+   점수 표시
+========================================================= */
+async function updateScoreUI(){
+  try{
+    const snap =
+      await playersRef().once("value");
+    const players =
+      getPlayersArray(snap.val());
+    const el =
+      document.getElementById("scoreText");
+    if(!el) return;
+    if(isTeam()){
+      el.textContent =
+        `🔥 ${teamScore(players,"A")} : ${teamScore(players,"B")} 💧`;
+    }else{
+      const me =
+        players.find(p => p.id === playerId);
+      const opponent =
+        players.find(p => p.id !== playerId);
+      el.textContent =
+        `${me?.score || 0} : ${opponent?.score || 0}`;
+    }
+  }catch(_){}
+}
+/* =========================================================
+   답변 제출
+========================================================= */
+async function submitAnswer(answerIndex){
+  if(submitted) return;
+  submitted = true;
+  clearTimer();
+  const q = currentQuestion();
+  const correct =
+    answerIndex >= 0 &&
+    answerIndex === Number(q.correct);
+  const buttons =
+    document.querySelectorAll("[data-index]");
+  buttons.forEach(btn => {
+    btn.disabled = true;
+    if(
+      Number(btn.dataset.index) !== answerIndex
+    ){
+      btn.classList.add("dim");
+    }else{
+      btn.classList.add("picked");
+    }
+  });
+  const status =
+    document.getElementById("answerStatus");
+  if(status){
+    status.textContent =
+      answerIndex < 0
+      ? "시간이 끝났습니다."
+      : correct
+        ? "정답 제출 완료!"
+        : "답변 제출 완료!";
+  }
+  try{
+    /*
+      중요:
+      클라이언트에서 score를 직접 증가시키는 대신
+      해당 round의 answer 기록과 score 변경을
+      한 번의 update로 처리합니다.
+      또한 이미 answer가 존재하면 다시 점수를
+      지급하지 않습니다.
+    */
+    const playerRef =
+      playersRef().child(playerId);
+    const snapshot =
+      await playerRef.once("value");
+    const player =
+      snapshot.val() || {};
+    const roundKey =
+      String(questionIndex);
+    const previous =
+      player.answers?.[roundKey];
+    if(previous?.submitted){
+      return;
+    }
+    const oldScore =
+      Number(player.score || 0);
+    const points =
+      correct ? 1 : 0;
+    const newScore =
+      oldScore + points;
+    const updates = {};
+    updates[
+      "battle/" + pin +
+      "/players/" + playerId +
+      "/score"
+    ] = newScore;
+    updates[
+      "battle/" + pin +
+      "/players/" + playerId +
+      "/answers/" + roundKey
+    ] = {
+      answer:answerIndex,
+      correct,
+      points,
+      submitted:true,
+      submittedAt:firebase.database.ServerValue.TIMESTAMP
+    };
+    updates[
+      "battle/" + pin +
+      "/players/" + playerId +
+      "/lastSeenAt"
+    ] = firebase.database.ServerValue.TIMESTAMP;
+    await db.ref().update(updates);
+    await tryFinishRound();
+  }catch(error){
+    console.error(error);
+    if(status){
+      status.textContent =
+        "답변 저장 중 문제가 발생했습니다.";
+    }
+  }
+}
+/* =========================================================
+   라운드 종료 판정
+========================================================= */
+let finishLock = false;
+async function tryFinishRound(){
+  if(finishLock) return;
+  try{
+    const stateSnap =
+      await stateRef().once("value");
+    const state =
+      stateSnap.val() || {};
+    if(
+      state.phase !== PHASE.PLAYING
+    ){
+      return;
+    }
+    if(
+      Number(state.round) !== Number(questionIndex)
+    ){
+      return;
+    }
+    const playersSnap =
+      await playersRef().once("value");
+    const players =
+      getPlayersArray(playersSnap.val());
+    const endedByTime =
+      Date.now() >= Number(state.roundEndsAt || 0);
+    const everyoneAnswered =
+      allAnswered(players,questionIndex);
+    if(
+      !endedByTime &&
+      !everyoneAnswered
+    ){
+      return;
+    }
+    if(role !== "host"){
+      return;
+    }
+    finishLock = true;
+    const currentSnap =
+      await stateRef().once("value");
+    const current =
+      currentSnap.val() || {};
+    if(
+      current.phase !== PHASE.PLAYING ||
+      Number(current.round) !== Number(questionIndex)
+    ){
+      finishLock = false;
+      return;
+    }
+    const resultEnd =
+      Date.now() + 2200;
+    await stateRef().update({
+      phase:PHASE.RESULT,
+      resultEndsAt:resultEnd,
+      updatedAt:firebase.database.ServerValue.TIMESTAMP
     });
-    go("hostLobby");
-  }catch(e){err.textContent="Firebase 연결에 실패했어요: "+e.message;}
-};
+    finishLock = false;
+  }catch(error){
+    finishLock = false;
+    console.error(error);
+  }
 }
-
-function updateTimeButtons(){
-  document.querySelectorAll("[data-time]").forEach(b=>{
-    b.classList.toggle("active", +b.dataset.time===timeLimit);
+/* =========================================================
+   RESULT
+========================================================= */
+function renderResult(){
+  document.getElementById("app").innerHTML =
+    navbar(`코드 <b>${pin}</b>`) +
+    `
+    <main>
+      <div class="stage wide">
+        <div class="result-card">
+          <div class="status-pill">
+            ● ROUND RESULT
+          </div>
+          <div class="big">⚔️</div>
+          <h1 class="title">
+            ROUND ${questionIndex + 1} 결과
+          </h1>
+          <div
+            class="result-score"
+            id="roundScore"
+          >
+            계산 중...
+          </div>
+          <div
+            class="winner"
+            id="roundWinner"
+          ></div>
+        </div>
+        <div id="resultPlayers"></div>
+        <div class="note" style="text-align:center">
+          ${
+            role === "host"
+            ? "잠시 후 다음 문제로 이동합니다."
+            : "진행자가 다음 라운드를 동기화하고 있습니다."
+          }
+        </div>
+      </div>
+    </main>
+    `;
+  updateResult();
+  const state = stateData || {};
+  const end =
+    Number(state.resultEndsAt || 0);
+  if(role === "host" && end){
+    clearTimer();
+    timer = setInterval(async () => {
+      if(Date.now() >= end){
+        clearTimer();
+        const next =
+          questionIndex + 1;
+        if(next >= questions.length){
+          await stateRef().set({
+            phase:PHASE.FINISHED,
+            round:questionIndex,
+            finishedAt:firebase.database.ServerValue.TIMESTAMP,
+            updatedAt:firebase.database.ServerValue.TIMESTAMP
+          });
+        }else{
+          const now = Date.now();
+          await stateRef().set({
+            phase:PHASE.COUNTDOWN,
+            round:next,
+            countdownEndsAt:now + 3000,
+            roundStartedAt:0,
+            roundEndsAt:0,
+            resultEndsAt:0,
+            updatedAt:firebase.database.ServerValue.TIMESTAMP
+          });
+        }
+      }
+    },100);
+  }
+}
+async function updateResult(){
+  try{
+    const snap =
+      await playersRef().once("value");
+    const players =
+      getPlayersArray(snap.val());
+    const container =
+      document.getElementById("resultPlayers");
+    if(!container) return;
+    if(isTeam()){
+      const a =
+        teamScore(players,"A");
+      const b =
+        teamScore(players,"B");
+      document.getElementById("roundScore").textContent =
+        `${a} : ${b}`;
+      document.getElementById("roundWinner").textContent =
+        a === b
+        ? "🤝 동점"
+        : a > b
+          ? "🔥 팀 A가 앞서고 있습니다!"
+          : "💧 팀 B가 앞서고 있습니다!";
+      container.innerHTML =
+        renderTeamGrid(players);
+      return;
+    }
+    const sorted =
+      [...players].sort(
+        (a,b) =>
+          Number(b.score || 0) -
+          Number(a.score || 0)
+      );
+    const me =
+      players.find(p => p.id === playerId);
+    const opponent =
+      players.find(p => p.id !== playerId);
+    const myScore =
+      Number(me?.score || 0);
+    const opponentScore =
+      Number(opponent?.score || 0);
+    document.getElementById("roundScore").textContent =
+      `${myScore} : ${opponentScore}`;
+    document.getElementById("roundWinner").textContent =
+      myScore === opponentScore
+      ? "🤝 현재 동점!"
+      : myScore > opponentScore
+        ? "🏆 현재 앞서고 있습니다!"
+        : "💥 상대가 앞서고 있습니다!";
+    container.innerHTML =
+      sorted.map(p => `
+        <div class="lead ${p.id === playerId ? "me" : ""}">
+          <span class="name">
+            ${p.role === "host" ? "👑 " : ""}
+            ${esc(p.name)}
+          </span>
+          <span class="pts">
+            ${Number(p.score || 0)}점
+          </span>
+        </div>
+      `).join("");
+  }catch(error){
+    console.error(error);
+  }
+}
+/* =========================================================
+   FINISHED
+========================================================= */
+function renderFinished(){
+  document.getElementById("app").innerHTML =
+    navbar(`코드 <b>${pin}</b>`) +
+    `
+    <main>
+      <div class="stage wide">
+        <div class="result-card">
+          <div class="big">🏆</div>
+          <div class="status-pill">
+            ● FINISHED
+          </div>
+          <h1 class="title">
+            Battle 종료!
+          </h1>
+          <div
+            class="result-score"
+            id="finalScore"
+          >
+            결과 계산 중...
+          </div>
+          <div
+            class="winner"
+            id="finalWinner"
+          ></div>
+        </div>
+        <div id="finalPlayers"></div>
+        <div class="actions">
+          <button class="btn" id="newBattle">
+            🔄 새 Battle 만들기
+          </button>
+          <button class="btn ghost" id="homeBtn">
+            🏠 FormWheel로 돌아가기
+          </button>
+        </div>
+      </div>
+    </main>
+    `;
+  updateFinal();
+  document.getElementById("newBattle").onclick =
+    () => {
+      clearSession();
+      pin = "";
+      playerId = "";
+      playerName = "";
+      questionIndex = 0;
+      role = "host";
+      setScreen("setup");
+    };
+  document.getElementById("homeBtn").onclick =
+    openHome;
+}
+async function updateFinal(){
+  try{
+    const snap =
+      await playersRef().once("value");
+    const players =
+      getPlayersArray(snap.val());
+    if(isTeam()){
+      const a =
+        teamScore(players,"A");
+      const b =
+        teamScore(players,"B");
+      document.getElementById("finalScore")
+        .textContent = `${a} : ${b}`;
+      document.getElementById("finalWinner")
+        .textContent =
+          a === b
+          ? "🤝 무승부!"
+          : a > b
+            ? "🔥 팀 A 승리!"
+            : "💧 팀 B 승리!";
+      document.getElementById("finalPlayers")
+        .innerHTML =
+          renderTeamGrid(players);
+      return;
+    }
+    const sorted =
+      [...players].sort(
+        (a,b) =>
+          Number(b.score || 0) -
+          Number(a.score || 0)
+      );
+    const me =
+      players.find(p => p.id === playerId);
+    const opponent =
+      players.find(p => p.id !== playerId);
+    const myScore =
+      Number(me?.score || 0);
+    const opponentScore =
+      Number(opponent?.score || 0);
+    document.getElementById("finalScore")
+      .textContent =
+        `${myScore} : ${opponentScore}`;
+    document.getElementById("finalWinner")
+      .textContent =
+        myScore === opponentScore
+        ? "🤝 무승부!"
+        : myScore > opponentScore
+          ? `🏆 ${me?.name || playerName} 승리!`
+          : `🏆 ${opponent?.name || "상대"} 승리!`;
+    document.getElementById("finalPlayers")
+      .innerHTML =
+        sorted.map((p,i) => `
+          <div class="lead ${p.id === playerId ? "me" : ""}">
+            <span class="name">
+              ${i === 0 ? "🏆 " : ""}
+              ${p.role === "host" ? "👑 " : ""}
+              ${esc(p.name)}
+            </span>
+            <span class="pts">
+              ${Number(p.score || 0)}점
+            </span>
+          </div>
+        `).join("");
+  }catch(error){
+    console.error(error);
+  }
+}
+/* =========================================================
+   방 나가기
+========================================================= */
+async function leaveRoom(deleteRoom = false){
+  clearTimer();
+  try{
+    if(pin && playerId){
+      if(role === "host" && deleteRoom){
+        await battleRef().remove();
+      }else{
+        await playersRef()
+          .child(playerId)
+          .update({
+            connected:false,
+            left:true,
+            leftAt:firebase.database.ServerValue.TIMESTAMP
+          });
+      }
+    }
+  }catch(error){
+    console.error(error);
+  }finally{
+    clearSession();
+    pin = "";
+    playerId = "";
+    playerName = "";
+    questionIndex = 0;
+    setScreen("home");
+  }
+}
+/* =========================================================
+   새로고침 복구
+========================================================= */
+async function restoreSession(){
+  const session =
+    loadSession();
+  if(!session){
+    render();
+    return;
+  }
+  try{
+    pin = session.pin;
+    playerId = session.playerId;
+    playerName = session.playerName;
+    role = session.role;
+    mode = session.mode || "1v1";
+    teamSize = Number(session.teamSize || 2);
+    myTeam = session.myTeam || "A";
+    timeLimit = Number(session.timeLimit || 10);
+    questionIndex = Number(session.questionIndex || 0);
+    selectedQuizId = session.selectedQuizId || "";
+    const snap =
+      await battleRef().once("value");
+    if(!snap.exists()){
+      clearSession();
+      pin = "";
+      playerId = "";
+      render();
+      return;
+    }
+    const room =
+      snap.val();
+    const me =
+      room.players?.[playerId];
+    if(!me){
+      clearSession();
+      pin = "";
+      playerId = "";
+      render();
+      return;
+    }
+    if(
+      Array.isArray(room.meta?.questions) &&
+      room.meta.questions.length
+    ){
+      questions =
+        room.meta.questions;
+    }
+    mode =
+      room.meta?.mode || mode;
+    timeLimit =
+      Number(room.meta?.timeLimit || timeLimit);
+    teamSize =
+      Number(room.meta?.teamSize || teamSize);
+    myTeam =
+      me.team || myTeam;
+    stateData =
+      room.state || {};
+    /*
+      새로고침으로 돌아온 플레이어는
+      온라인 상태를 다시 활성화합니다.
+    */
+    await playersRef()
+      .child(playerId)
+      .update({
+        connected:true,
+        lastSeenAt:firebase.database.ServerValue.TIMESTAMP
+      });
+    const phase =
+      stateData.phase || PHASE.WAITING;
+    if(phase === PHASE.WAITING){
+      screen =
+        role === "host"
+        ? "hostLobby"
+        : "playerLobby";
+    }else if(phase === PHASE.COUNTDOWN){
+      screen = "countdown";
+    }else if(phase === PHASE.PLAYING){
+      screen = "playing";
+    }else if(phase === PHASE.RESULT){
+      screen = "result";
+    }else if(phase === PHASE.FINISHED){
+      screen = "finished";
+    }else{
+      screen = "home";
+    }
+    render();
+    subscribeRoom();
+  }catch(error){
+    console.error(error);
+    clearSession();
+    pin = "";
+    playerId = "";
+    render();
+  }
+}
+/* =========================================================
+   브라우저 이탈 / 새로고침 처리
+========================================================= */
+function setupPresence(){
+  window.addEventListener("beforeunload", () => {
+    if(!pin || !playerId) return;
+    /*
+      beforeunload에서는 await를 사용할 수 없기 때문에
+      onDisconnect를 기본 퇴장 장치로 사용합니다.
+    */
+  });
+  window.addEventListener("pagehide", () => {
+    if(!pin || !playerId) return;
+    try{
+      playersRef()
+        .child(playerId)
+        .onDisconnect()
+        .update({
+          connected:false,
+          lastSeenAt:firebase.database.ServerValue.TIMESTAMP
+        });
+    }catch(_){}
   });
 }
-function updateTeamSizeButtons(){
-  document.querySelectorAll("[data-team-size]").forEach(b=>{
-    b.classList.toggle("active", +b.dataset.teamSize===teamSize);
-  });
+/* =========================================================
+   방 연결 유지
+========================================================= */
+async function registerPresence(){
+  if(!pin || !playerId) return;
+  try{
+    const ref =
+      playersRef().child(playerId);
+    await ref.onDisconnect().update({
+      connected:false,
+      lastSeenAt:firebase.database.ServerValue.TIMESTAMP
+    });
+    await ref.update({
+      connected:true,
+      lastSeenAt:firebase.database.ServerValue.TIMESTAMP
+    });
+  }catch(error){
+    console.error("presence:",error);
+  }
 }
-
-function hostLobby(){
-if(isTeamMode()){hostLobbyTeam();return;}
-app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
-<div class="pin-box"><div class="plabel">Battle 참가 코드</div><div class="pin">${pin}</div></div>
-<p class="sub" style="text-align:center">친구에게 이 코드를 알려주세요. 친구가 참가하면 자동으로 표시됩니다.</p>
-<div id="lobbyPlayers" class="player-grid"></div>
-<div class="actions"><button class="btn" id="start" disabled>상대방을 기다리는 중…</button><button class="btn ghost" id="cancel">취소하고 처음으로</button></div>
-<div class="error" id="err"></div>
-</div></main>`;
-document.getElementById("cancel").onclick=()=>go("home");
-
-const ref=playersRef();
-const cb=s=>{
- const ps=Object.entries(s.val()||{}).map(([id,p])=>({id,...p}));
- const opponent=ps.find(p=>p.role==="player");
- opponentName=opponent?opponent.name:"상대를 기다리는 중";
- document.getElementById("lobbyPlayers").innerHTML=`
- <div class="player-card fire"><div class="player-icon">🔥</div><div class="player-name">${esc(hostName)}</div><div class="score">${hostScore}</div></div>
- <div class="player-card water"><div class="player-icon">💧</div><div class="player-name">${esc(opponentName)}</div><div class="score">${opponent?opponent.score:"—"}</div></div>`;
- const btn=document.getElementById("start");
- if(opponent){btn.disabled=false;btn.textContent="⚔️ Battle 시작하기";}
+/* =========================================================
+   주기적 presence 갱신
+========================================================= */
+setInterval(async () => {
+  if(!pin || !playerId) return;
+  try{
+    await playersRef()
+      .child(playerId)
+      .update({
+        connected:true,
+        lastSeenAt:firebase.database.ServerValue.TIMESTAMP
+      });
+  }catch(_){}
+},15000);
+/* =========================================================
+   방 상태 감시 보강
+========================================================= */
+const originalSubscribeRoom = subscribeRoom;
+subscribeRoom = function(){
+  originalSubscribeRoom();
+  registerPresence();
 };
-ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
-
-const stateRef=battleRef().child("state");
-const stateCb=s=>{const st=s.val();if(st&&st.phase==="question"&&st.round>=0){qi=st.round;go("hostQuestion")}};
-stateRef.on("value",stateCb);unsub.push(()=>stateRef.off("value",stateCb));
-
-document.getElementById("start").onclick=async()=>{
- try{await stateRef.set({phase:"question",round:0,startedAt:firebase.database.ServerValue.TIMESTAMP})}
- catch(e){document.getElementById("err").textContent=e.message}
-};
-}
-
-function renderTeamGrid(arr){
- const a=arr.filter(p=>p.team==="A"), b=arr.filter(p=>p.team==="B");
- const memberRow=p=>`<div class="team-member ${p.role==="host"?"host-tag":""} ${p.id===playerId?"me":""}"><span>${esc(p.name)}</span><span>${p.score||0}점</span></div>`;
- return `<div class="team-grid">
- <div class="team-col fire"><div class="team-icon">🔥</div><div class="team-title">팀 A · ${a.length}${teamSize?`/${teamSize}`:""}명</div><div class="team-score">${a.reduce((s,p)=>s+(p.score||0),0)}</div>
- <div class="team-members">${a.length?a.map(memberRow).join(""):`<div class="team-empty">아직 팀원이 없어요</div>`}</div></div>
- <div class="team-col water"><div class="team-icon">💧</div><div class="team-title">팀 B · ${b.length}${teamSize?`/${teamSize}`:""}명</div><div class="team-score">${b.reduce((s,p)=>s+(p.score||0),0)}</div>
- <div class="team-members">${b.length?b.map(memberRow).join(""):`<div class="team-empty">아직 팀원이 없어요</div>`}</div></div>
- </div>`;
-}
-
-function hostLobbyTeam(){
-app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
-<div class="pin-box"><div class="plabel">Battle 참가 코드</div><div class="pin">${pin}</div></div>
-<p class="sub" style="text-align:center">친구들에게 이 코드를 알려주세요. 참가하는 대로 팀에 자동 배정됩니다. (팀당 최대 ${teamSize}명)</p>
-<div id="lobbyTeams"></div>
-<div class="actions"><button class="btn" id="start" disabled>팀원을 기다리는 중…</button><button class="btn ghost" id="cancel">취소하고 처음으로</button></div>
-<div class="error" id="err"></div>
-</div></main>`;
-document.getElementById("cancel").onclick=()=>go("home");
-
-const ref=playersRef();
-const cb=s=>{
- const arr=Object.entries(s.val()||{}).map(([id,p])=>({id,...p}));
- document.getElementById("lobbyTeams").innerHTML=renderTeamGrid(arr);
- const c=teamCounts(arr);
- const btn=document.getElementById("start");
- if(c.A>=1&&c.B>=1){btn.disabled=false;btn.textContent="⚔️ Battle 시작하기";}
- else{btn.disabled=true;btn.textContent="팀원을 기다리는 중…";}
-};
-ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
-
-const stateRef=battleRef().child("state");
-const stateCb=s=>{const st=s.val();if(st&&st.phase==="question"&&st.round>=0){qi=st.round;go("hostQuestion")}};
-stateRef.on("value",stateCb);unsub.push(()=>stateRef.off("value",stateCb));
-
-document.getElementById("start").onclick=async()=>{
- try{await stateRef.set({phase:"question",round:0,startedAt:firebase.database.ServerValue.TIMESTAMP})}
- catch(e){document.getElementById("err").textContent=e.message}
-};
-}
-
-function join(){
-app.innerHTML=nav()+`<main><div class="stage">
-<h1 class="title">Battle 참가하기</h1><p class="sub">친구에게 받은 코드와 닉네임을 입력하세요.</p>
-<div class="field"><label>Battle 코드</label><input id="pin" type="tel" maxlength="4" placeholder="예: 4821"></div>
-<div class="field"><label>닉네임</label><input id="name" type="text" maxlength="12" placeholder="닉네임"></div>
-<button class="btn" id="enter">참가하기</button><div class="error" id="err"></div>
-<button class="btn ghost" id="back" style="margin-top:10px">뒤로가기</button>
-</div></main>`;
-document.getElementById("back").onclick=()=>go("home");
-document.getElementById("enter").onclick=async()=>{
- const p=document.getElementById("pin").value.trim(),n=document.getElementById("name").value.trim(),e=document.getElementById("err");
- if(!/^\d{4}$/.test(p)){e.textContent="4자리 코드를 입력해주세요.";return}
- if(!n){e.textContent="닉네임을 입력해주세요.";return}
- try{
-   const snap=await db.ref("battle/"+p).once("value");
-   if(!snap.exists()){e.textContent="존재하지 않는 Battle 코드예요.";return}
-   const data=snap.val(), ps=data.players||{};
-   const battleMode=data.meta.mode==="team"?"team":"1v1";
-   if(data.state&&data.state.phase&&data.state.phase!=="lobby"){e.textContent="이미 시작된 Battle이에요.";return}
-   const newPlayer={name:n,score:0,role:"player",joinedAt:firebase.database.ServerValue.TIMESTAMP};
-   if(battleMode==="team"){
-     const size=data.meta.teamSize||2;
-     const t=assignTeam(ps,size);
-     if(!t){e.textContent="이미 인원이 가득 찬 Battle이에요.";return}
-     newPlayer.team=t;mode="team";teamSize=size;myTeam=t;
-   }else{
-     if(Object.values(ps).some(x=>x.role==="player")){e.textContent="이미 상대가 참가한 Battle이에요.";return}
-     mode="1v1";
-   }
-   pin=p;playerName=n;playerId=randomId();
-   battleQuestions=data.meta.questions||QUESTIONS;timeLimit=data.meta.timeLimit||10;
-   await db.ref("battle/"+p+"/players/"+playerId).set(newPlayer);
-   go("playerLobby");
- }catch(err){e.textContent="Firebase 연결에 실패했어요: "+err.message}
-};
-}
-
-function playerLobby(){
-if(isTeamMode()){playerLobbyTeam();return;}
-app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage"><div class="center">
-<div class="big">⚔️</div><h1 class="title">${esc(playerName)}님, 참가 완료!</h1>
-<p class="sub">상대방이 Battle을 시작하면 자동으로 문제가 나옵니다.</p></div></div></main>`;
-const ref=battleRef().child("state");
-const cb=s=>{const st=s.val();if(st&&st.phase==="question"){qi=st.round||0;go("playerQuestion")}};
-ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
-}
-
-function playerLobbyTeam(){
-app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
-<div class="center"><div class="big">${myTeam==="A"?"🔥":"💧"}</div><h1 class="title">${esc(playerName)}님, 팀 ${myTeam} 참가 완료!</h1>
-<p class="sub">진행자가 Battle을 시작하면 자동으로 문제가 나옵니다.</p></div>
-<div id="lobbyTeams"></div>
-</div></main>`;
-const ref=playersRef();
-const pcb=s=>{
- const arr=Object.entries(s.val()||{}).map(([id,p])=>({id,...p}));
- document.getElementById("lobbyTeams").innerHTML=renderTeamGrid(arr);
-};
-ref.on("value",pcb);unsub.push(()=>ref.off("value",pcb));
-const sref=battleRef().child("state");
-const cb=s=>{const st=s.val();if(st&&st.phase==="question"){qi=st.round||0;go("playerQuestion")}};
-sref.on("value",cb);unsub.push(()=>sref.off("value",cb));
-}
-
-function getQ(){return battleQuestions[qi]||QUESTIONS[qi]||QUESTIONS[0];}
-
-function questionScreen(){
- picked=null;
- const q=getQ();
- const scoreLabel=isTeamMode()?`🔥 팀A ${teamAScore} &nbsp; : &nbsp; ${teamBScore} 팀B 💧`:`🔥 ${hostScore} &nbsp; : &nbsp; ${opponentScore} 💧`;
- app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
- <div class="topbar"><span class="mini">ROUND ${qi+1} / ${battleQuestions.length}</span><span class="mini">${scoreLabel}</span></div>
- <div class="timer-row"><div class="timer-track"><div class="timer-fill" id="fill" style="width:100%"></div></div><div class="timer-num" id="tnum">${timeLimit}s</div></div>
- <div class="qtext">${esc(q.text)}</div>
- <div class="choices-grid" id="choices">${q.choices.map((c,i)=>`<button class="choice ${"abcd"[i]}" data-i="${i}">${esc(c)}</button>`).join("")}</div>
- <div class="note" id="status">정답을 하나 선택하세요.</div>
- </div></main>`;
- document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>submitAnswer(+b.dataset.i));
- runTimer();
- watchAnswers();
- const sr=battleRef().child("state"), sc=s=>{const st=s.val();if(st&&st.phase==="reveal"&&st.round===qi)go("reveal");if(st&&st.phase==="final")go("final")};
- sr.on("value",sc);unsub.push(()=>sr.off("value",sc));
-}
-function hostQuestion(){questionScreen();}
-function playerQuestion(){questionScreen();}
-
-function runTimer(){
- clearTimer();localStart=Date.now();
- timer=setInterval(async()=>{
-   const elapsed=(Date.now()-localStart)/1000,remain=Math.max(0,Math.ceil(timeLimit-elapsed)),pct=Math.max(0,100*(1-elapsed/timeLimit));
-   const f=document.getElementById("fill"),tn=document.getElementById("tnum");
-   if(f)f.style.width=pct+"%";if(tn)tn.textContent=remain+"s";
-   if(remain<=5){if(f)f.classList.add("urgent");if(tn)tn.classList.add("urgent")}
-   if(elapsed>=timeLimit){clearTimer();if(picked===null)await submitAnswer(-1);}
- },100);
-}
-
-async function submitAnswer(i){
- if(picked!==null)return;picked=i;clearTimer();
- document.querySelectorAll(".choice").forEach(b=>{b.disabled=true;if(+b.dataset.i!==i)b.classList.add("dim");else b.classList.add("picked")});
- const q=getQ(),correct=i===q.correct;
- const points=correct?1:0;
- try{
-   const pRef=battleRef().child("players").child(playerId);
-   // rounds 기록과 score 갱신을 하나의 update()로 묶어 원자적으로 반영합니다.
-   // (이전에는 두 번의 별도 write로 나뉘어 있어서, 상대 기기가 "답변 완료" 신호를
-   // rounds 필드만 보고 감지할 때 score가 아직 반영되지 않은 순간을 읽어버리는
-   // 경쟁 조건이 있었습니다. 이게 기기마다 점수가 다르게 보이던 원인입니다.)
-   const curSnap=await pRef.child("score").once("value");
-   const newScore=(curSnap.val()||0)+points;
-   await pRef.update({
-     score:newScore,
-     ["rounds/"+qi]:{answer:i,correct,points,at:firebase.database.ServerValue.TIMESTAMP}
-   });
-   const st=document.getElementById("status");
-   if(st)st.textContent=correct?"정답 제출 완료!":"답변 제출 완료!";
- }catch(e){const st=document.getElementById("status");if(st)st.textContent="답변 저장 실패: "+e.message}
-}
-
-function watchAnswers(){
- const round=String(qi);
- const ref=playersRef();
- const cb=s=>{
-   const ps=s.val()||{}, list=Object.values(ps);
-   const answered=list.filter(p=>p.rounds&&p.rounds[round]);
-   const st=document.getElementById("status");
-   if(st)st.textContent=`답변 ${answered.length} / ${list.length}`;
-   if(list.length>=2&&answered.length>=list.length) finalizeRoundIfNeeded();
- };
- ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
-}
-
-async function finalizeRoundIfNeeded(){
- const snap=await playersRef().once("value"),ps=snap.val()||{},arr=Object.values(ps);
- if(arr.length<2)return;
- const answers=arr.map(p=>p.rounds?p.rounds[String(qi)]:null).filter(Boolean);
- if(answers.length<arr.length)return;
- const st=await battleRef().child("state").once("value"),current=st.val()||{};
- if(current.phase!=="question"||current.round!==qi)return;
- await battleRef().child("state").set({phase:"reveal",round:qi,revealedAt:firebase.database.ServerValue.TIMESTAMP});
-}
-
-async function reveal(){
- if(isTeamMode()){revealTeam();return;}
- const snap=await playersRef().once("value"),ps=snap.val()||{},arr=Object.values(ps);
- const host=arr.find(p=>p.role==="host")||{name:hostName,score:0},player=arr.find(p=>p.role==="player")||{name:opponentName,score:0};
- hostName=host.name;opponentName=player.name;hostScore=host.score||0;opponentScore=player.score||0;
- const me=role==="host"?host:player, other=role==="host"?player:host;
- app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage">
- <div class="result-card"><div class="big">⚔️</div><h1 class="title">ROUND ${qi+1} 결과</h1>
- <div class="result-score">${me.score||0} : ${other.score||0}</div><div class="winner">${esc(me.name)} ${((me.score||0)>(other.score||0))?"앞서는 중":((me.score||0)===(other.score||0)?"동점":"추격 중")}!</div></div>
- <div class="lead"><span class="name">🔥 ${esc(host.name)}</span><span class="pts">${host.score||0}점</span></div>
- <div class="lead"><span class="name">💧 ${esc(player.name)}</span><span class="pts">${player.score||0}점</span></div>
- <div class="actions">${role==="host"?`<button class="btn" id="next">${qi===battleQuestions.length-1?"최종 결과 보기":"다음 문제"}</button>`:`<div class="note" style="text-align:center">진행자가 다음 문제를 시작할 때까지 잠시만 기다려주세요.</div>`}</div>
- </div></main>`;
- wire();
- if(role==="host")document.getElementById("next").onclick=async()=>{
-   if(qi===battleQuestions.length-1)await battleRef().child("state").set({phase:"final",round:qi});
-   else await battleRef().child("state").set({phase:"question",round:qi+1,startedAt:firebase.database.ServerValue.TIMESTAMP});
- };
- const ref=battleRef().child("state"),cb=s=>{
-   const st=s.val();if(!st)return;
-   if(st.phase==="question"&&st.round!==qi){qi=st.round;go(role==="host"?"hostQuestion":"playerQuestion");return}
-   if(st.phase==="final")go("final");
- };
- ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
-}
-
-async function revealTeam(){
- const snap=await playersRef().once("value"),ps=snap.val()||{},arr=Object.values(ps);
- teamAScore=arr.filter(p=>p.team==="A").reduce((s,p)=>s+(p.score||0),0);
- teamBScore=arr.filter(p=>p.team==="B").reduce((s,p)=>s+(p.score||0),0);
- const myScore=myTeam==="A"?teamAScore:teamBScore, otherScore=myTeam==="A"?teamBScore:teamAScore;
- const verdict=myScore>otherScore?"우리 팀이 앞서는 중":myScore===otherScore?"동점":"추격 중";
- app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
- <div class="result-card"><div class="big">⚔️</div><h1 class="title">ROUND ${qi+1} 결과</h1>
- <div class="result-score">${teamAScore} : ${teamBScore}</div><div class="winner">${esc(playerName)}님, ${verdict}!</div></div>
- ${renderTeamGrid(arr)}
- <div class="actions">${role==="host"?`<button class="btn" id="next">${qi===battleQuestions.length-1?"최종 결과 보기":"다음 문제"}</button>`:`<div class="note" style="text-align:center">진행자가 다음 문제를 시작할 때까지 잠시만 기다려주세요.</div>`}</div>
- </div></main>`;
- wire();
- if(role==="host")document.getElementById("next").onclick=async()=>{
-   if(qi===battleQuestions.length-1)await battleRef().child("state").set({phase:"final",round:qi});
-   else await battleRef().child("state").set({phase:"question",round:qi+1,startedAt:firebase.database.ServerValue.TIMESTAMP});
- };
- const ref=battleRef().child("state"),cb=s=>{
-   const st=s.val();if(!st)return;
-   if(st.phase==="question"&&st.round!==qi){qi=st.round;go(role==="host"?"hostQuestion":"playerQuestion");return}
-   if(st.phase==="final")go("final");
- };
- ref.on("value",cb);unsub.push(()=>ref.off("value",cb));
-}
-
-function final(){
- if(isTeamMode()){finalTeam();return;}
- app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage">
- <div class="result-card"><div class="big">🏆</div><h1 class="title">Battle 종료!</h1>
- <div class="result-score" id="finalScore">결과 계산 중…</div><div class="winner" id="finalWinner"></div></div>
- <div id="finalList"></div>
- <div class="actions"><button class="btn" id="again">🔄 새 Battle 만들기</button><button class="btn ghost" id="quiz">📝 FormWheel로 돌아가기</button></div>
- </div></main>`;
- playersRef().once("value").then(s=>{
-   const arr=Object.entries(s.val()||{}).map(([id,p])=>({id,...p})).sort((a,b)=>(b.score||0)-(a.score||0));
-   const me=arr.find(p=>p.id===playerId)||arr[0]||{name:playerName,score:0};
-   const other=arr.find(p=>p.id!==me.id)||{name:"상대",score:0};
-   document.getElementById("finalScore").textContent=`${me.score||0} : ${other.score||0}`;
-   document.getElementById("finalWinner").textContent=(me.score||0)>(other.score||0)?`🏆 ${me.name} 승리!`:(me.score||0)===(other.score||0)?"🤝 무승부!":`💥 ${other.name} 승리!`;
-   document.getElementById("finalList").innerHTML=arr.map((p,i)=>`<div class="lead ${p.id===playerId?"me":""}"><span class="name">${i===0?"🏆 ":""}${esc(p.name)}</span><span class="pts">${p.score||0}점</span></div>`).join("");
- });
- document.getElementById("again").onclick=()=>{pin="";qi=0;role="host";go("setup")};
- document.getElementById("quiz").onclick=()=>window.open(HOME,"_blank");
-}
-
-function finalTeam(){
- app.innerHTML=nav(`코드 <b>${pin}</b>`)+`<main><div class="stage wide">
- <div class="result-card"><div class="big">🏆</div><h1 class="title">Battle 종료!</h1>
- <div class="result-score" id="finalScore">결과 계산 중…</div><div class="winner" id="finalWinner"></div></div>
- <div id="finalTeams"></div>
- <div class="actions"><button class="btn" id="again">🔄 새 Battle 만들기</button><button class="btn ghost" id="quiz">📝 FormWheel로 돌아가기</button></div>
- </div></main>`;
- playersRef().once("value").then(s=>{
-   const arr=Object.entries(s.val()||{}).map(([id,p])=>({id,...p}));
-   const a=arr.filter(p=>p.team==="A").reduce((s,p)=>s+(p.score||0),0);
-   const b=arr.filter(p=>p.team==="B").reduce((s,p)=>s+(p.score||0),0);
-   teamAScore=a;teamBScore=b;
-   document.getElementById("finalScore").textContent=`${a} : ${b}`;
-   const myScore=myTeam==="A"?a:b, otherScore=myTeam==="A"?b:a;
-   document.getElementById("finalWinner").textContent=myScore>otherScore?"🏆 우리 팀 승리!":myScore===otherScore?"🤝 무승부!":"💥 상대 팀 승리!";
-   document.getElementById("finalTeams").innerHTML=renderTeamGrid(arr);
- });
- document.getElementById("again").onclick=()=>{pin="";qi=0;role="host";mode="1v1";go("setup")};
- document.getElementById("quiz").onclick=()=>window.open(HOME,"_blank");
-}
-
-render();
+/* =========================================================
+   초기화
+========================================================= */
+setupPresence();
+restoreSession();
 })();
 </script>
 </body>
