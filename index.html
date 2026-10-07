@@ -2369,58 +2369,16 @@ async function submitAnswer(answerIndex){
     const playerRef =
       playersRef().child(playerId);
 
-    const snapshot =
-      await playerRef.once("value");
-
-    const player =
-      snapshot.val() || {};
-
-    const roundKey =
-      String(questionIndex);
-
-    const previous =
-      player.answers?.[roundKey];
-
-    if(previous?.submitted){
-      return;
-    }
-
-    const oldScore =
-      Number(player.score || 0);
-
-    const points =
-      correct ? 1 : 0;
-
-    const newScore =
-      oldScore + points;
-
-    const updates = {};
-
-    updates[
-      "battle/" + pin +
-      "/players/" + playerId +
-      "/score"
-    ] = newScore;
-
-    updates[
-      "battle/" + pin +
-      "/players/" + playerId +
-      "/answers/" + roundKey
-    ] = {
-      answer:answerIndex,
-      correct,
-      points,
-      submitted:true,
-      submittedAt:firebase.database.ServerValue.TIMESTAMP
-    };
-
-    updates[
-      "battle/" + pin +
-      "/players/" + playerId +
-      "/lastSeenAt"
-    ] = firebase.database.ServerValue.TIMESTAMP;
-
-    await db.ref().update(updates);
+    const roundKey = String(questionIndex);
+    await playerRef.transaction(player => {
+      if(!player || player.answers?.[roundKey]?.submitted) return;
+      const points = correct ? 1 : 0;
+      player.score = Number(player.score || 0) + points;
+      player.answers = player.answers || {};
+      player.answers[roundKey] = {answer:answerIndex,correct,points,submitted:true,submittedAt:firebase.database.ServerValue.TIMESTAMP};
+      player.lastSeenAt = firebase.database.ServerValue.TIMESTAMP;
+      return player;
+    }, undefined, false);
 
     await tryFinishRound();
 
@@ -2429,8 +2387,9 @@ async function submitAnswer(answerIndex){
     console.error(error);
 
     if(status){
-      status.textContent =
-        "답변 저장 중 문제가 발생했습니다.";
+      submitted=false;
+      buttons.forEach(btn=>btn.disabled=false);
+      status.textContent = "답변 저장에 실패했습니다. 다시 제출해주세요.";
     }
   }
 }
@@ -3189,3 +3148,4 @@ restoreSession();
 </body>
 </html>
 ```
+
