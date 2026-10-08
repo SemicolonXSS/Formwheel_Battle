@@ -234,11 +234,7 @@ function allAnswered(players, round){
 function navbar(meta = ""){
   return `
     <div class="navbar">
-      <button class="brand" id="brandBtn">
-        <span class="mark">F</span>
-        <span class="wordmark">FormWheel</span>
-        <span class="tag">Battle</span>
-      </button>
+      <button class="brand fw-hub-logo" id="brandBtn" aria-label="FormWheel 메인으로 이동"><span class="fw-hub-form">Form</span><span class="fw-hub-icon" aria-hidden="true"></span><span class="fw-hub-wheel">Wheel</span></button>
       <span class="nav-meta">${meta}</span>
     </div>
   `;
