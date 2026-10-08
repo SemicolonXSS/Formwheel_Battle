@@ -1,6 +1,6 @@
 # Formwheel_Battle
 
-Formwheel 프로젝트와 게임을 모아 실행하는 홈 화면.
+친구와 실시간으로 퀴즈를 풀며 대결하는 게임.
 
 - 실행: https://semicolonxss.github.io/Formwheel_Battle/
 - 프로젝트 목록: https://semicolonxss.github.io/Formwheel/
