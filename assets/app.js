@@ -994,6 +994,11 @@ function subscribeRoom(){
     syncLobby(room);
 
     syncPhase(room);
+    // The host observes both submissions, including when the opponent answers last.
+    if(role==="host" && room.state?.phase===PHASE.PLAYING &&
+       allAnswered(getPlayersArray(room.players),Number(room.state.round))) {
+      void tryFinishRound();
+    }
   };
 
   roomRef.on("value", callback);
