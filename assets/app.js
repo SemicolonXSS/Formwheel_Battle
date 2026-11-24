@@ -276,7 +276,7 @@ function renderHome(){
   document.getElementById("app").innerHTML =
     navbar() +
     `
-    <main>
+    <main id="secol-main-content" tabindex="-1">
       <div class="stage">
 
         <h1 class="title">Battle</h1>
@@ -287,12 +287,12 @@ function renderHome(){
         <div class="home-choice">
 
           <button class="home-card" id="createBattle">
-            <h3>⚔️ Battle 만들기</h3>
+            <h2>⚔️ Battle 만들기</h2>
             <p>Quiz와 제한 시간을 선택하고 Battle을 만들어보세요.</p>
           </button>
 
           <button class="home-card" id="joinBattle">
-            <h3>🚪 Battle 참가하기</h3>
+            <h2>🚪 Battle 참가하기</h2>
             <p>친구에게 받은 4자리 코드로 참가합니다.</p>
           </button>
 
@@ -324,7 +324,7 @@ async function renderSetup(){
   document.getElementById("app").innerHTML =
     navbar() +
     `
-    <main>
+    <main id="secol-main-content" tabindex="-1">
       <div class="stage">
 
         <h1 class="title">Battle 만들기</h1>
@@ -651,7 +651,7 @@ function renderHostLobby(){
   document.getElementById("app").innerHTML =
     navbar(`코드 <b>${pin}</b>`) +
     `
-    <main>
+    <main id="secol-main-content" tabindex="-1">
       <div class="stage wide">
 
         <div class="pin-box">
@@ -699,7 +699,7 @@ function renderJoin(){
   document.getElementById("app").innerHTML =
     navbar() +
     `
-    <main>
+    <main id="secol-main-content" tabindex="-1">
       <div class="stage">
 
         <h1 class="title">Battle 참가하기</h1>
@@ -885,7 +885,7 @@ function renderPlayerLobby(){
   document.getElementById("app").innerHTML =
     navbar(`코드 <b>${pin}</b>`) +
     `
-    <main>
+    <main id="secol-main-content" tabindex="-1">
       <div class="stage wide">
 
         <div class="center">
@@ -1300,7 +1300,7 @@ function renderCountdown(){
   document.getElementById("app").innerHTML =
     navbar(`코드 <b>${pin}</b>`) +
     `
-    <main>
+    <main id="secol-main-content" tabindex="-1">
       <div class="stage">
 
         <div class="countdown">
@@ -1422,7 +1422,7 @@ function renderPlaying(){
   document.getElementById("app").innerHTML =
     navbar(`코드 <b>${pin}</b>`) +
     `
-    <main>
+    <main id="secol-main-content" tabindex="-1">
       <div class="stage wide">
 
         <div class="topbar">
@@ -1828,7 +1828,7 @@ function renderResult(){
   document.getElementById("app").innerHTML =
     navbar(`코드 <b>${pin}</b>`) +
     `
-    <main>
+    <main id="secol-main-content" tabindex="-1">
       <div class="stage wide">
 
         <div class="result-card">
@@ -2031,7 +2031,7 @@ function renderFinished(){
   document.getElementById("app").innerHTML =
     navbar(`코드 <b>${pin}</b>`) +
     `
-    <main>
+    <main id="secol-main-content" tabindex="-1">
       <div class="stage wide">
 
         <div class="result-card">
